@@ -23,6 +23,18 @@ object DiskUtil {
         return contentType?.startsWith("image/") ?: false
     }
 
+    fun isAnimatedImage(openStream: (() -> InputStream)): Boolean {
+        return try {
+            val bytes = ByteArray(4)
+            openStream().use {
+                it.read(bytes)
+                bytes[0] == 'G'.toByte() && bytes[1] == 'I'.toByte() && bytes[2] == 'F'.toByte() && bytes[3] == '8'.toByte()
+            }
+        } catch (e: Exception) {
+            false
+        }
+    }
+
     fun findImageMime(openStream: () -> InputStream): String? {
         try {
             openStream().buffered().use {

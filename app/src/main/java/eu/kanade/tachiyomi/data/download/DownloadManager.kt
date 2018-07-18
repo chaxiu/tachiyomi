@@ -17,7 +17,7 @@ import rx.Observable
  *
  * @param context the application context.
  */
-class DownloadManager(context: Context) {
+class DownloadManager(private val context: Context) {
 
     /**
      * Downloads provider, used to retrieve the folders where the chapters are or should be stored.
@@ -120,7 +120,9 @@ class DownloadManager(context: Context) {
 
             files.sortedBy { it.name }
                     .mapIndexed { i, file ->
-                        Page(i, uri = file.uri).apply { status = Page.READY }
+                        Page(i, uri = file.uri, stream = {
+                            context.contentResolver.openInputStream(file.uri)
+                        }).apply { status = Page.READY }
                     }
         }
     }

@@ -1,12 +1,13 @@
 package eu.kanade.tachiyomi.ui.reader
 
+import android.net.Uri
+import eu.kanade.tachiyomi.data.cache.ChapterCache
+import eu.kanade.tachiyomi.data.database.models.Chapter
 import eu.kanade.tachiyomi.data.database.models.Manga
 import eu.kanade.tachiyomi.data.download.DownloadManager
 import eu.kanade.tachiyomi.source.Source
 import eu.kanade.tachiyomi.source.model.Page
 import eu.kanade.tachiyomi.source.online.HttpSource
-import eu.kanade.tachiyomi.source.online.fetchImageFromCacheThenNet
-import eu.kanade.tachiyomi.source.online.fetchPageListFromCacheThenNet
 import eu.kanade.tachiyomi.util.plusAssign
 import rx.Observable
 import rx.schedulers.Schedulers
@@ -17,6 +18,7 @@ import java.util.concurrent.atomic.AtomicInteger
 
 class ChapterLoader(
         private val downloadManager: DownloadManager,
+        private val chapterCache: ChapterCache,
         private val manga: Manga,
         private val source: Source
 ) {
@@ -135,6 +137,77 @@ class ChapterLoader(
             return if (p != 0) p else identifier.compareTo(other.identifier)
         }
 
+    }
+
+    /**
+     * Returns an observable with the page list for a chapter. It tries to return the page list from
+     * the local cache, otherwise fallbacks to network.
+     *
+     * @param chapter the chapter whose page list has to be fetched.
+     */
+    fun HttpSource.fetchPageListFromCacheThenNet(chapter: Chapter): Observable<List<Page>> {
+        return chapterCache
+                .getPageListFromCache(chapter)
+                .onErrorResumeNext { fetchPageList(chapter) }
+    }
+
+
+    /**
+     * Returns an observable of the page with the downloaded image.
+     *
+     * @param page the page whose source image has to be downloaded.
+     */
+    private fun HttpSource.fetchImageFromCacheThenNet(page: Page): Observable<Page> {
+        return if (page.imageUrl.isNullOrEmpty())
+            getImageUrl(page).flatMap { getCachedImage(it) }
+        else
+            getCachedImage(page)
+    }
+
+    private fun HttpSource.getImageUrl(page: Page): Observable<Page> {
+        page.status = Page.LOAD_PAGE
+        return fetchImageUrl(page)
+            .doOnError { page.status = Page.ERROR }
+            .onErrorReturn { null }
+            .doOnNext { page.imageUrl = it }
+            .map { page }
+    }
+
+    /**
+     * Returns an observable of the page that gets the image from the chapter or fallbacks to
+     * network and copies it to the cache calling [cacheImage].
+     *
+     * @param page the page.
+     */
+    private fun HttpSource.getCachedImage(page: Page): Observable<Page> {
+        val imageUrl = page.imageUrl ?: return Observable.just(page)
+
+        return Observable.just(page)
+            .flatMap {
+                if (!chapterCache.isImageInCache(imageUrl)) {
+                    cacheImage(page)
+                } else {
+                    Observable.just(page)
+                }
+            }
+            .doOnNext {
+                page.uri = Uri.fromFile(chapterCache.getImageFile(imageUrl))
+                page.status = Page.READY
+            }
+            .doOnError { page.status = Page.ERROR }
+            .onErrorReturn { page }
+    }
+
+    /**
+     * Returns an observable of the page that downloads the image to [ChapterCache].
+     *
+     * @param page the page.
+     */
+    private fun HttpSource.cacheImage(page: Page): Observable<Page> {
+        page.status = Page.DOWNLOAD_IMAGE
+        return fetchImage(page)
+            .doOnNext { chapterCache.putImageToCache(page.imageUrl!!, it) }
+            .map { page }
     }
 
 }

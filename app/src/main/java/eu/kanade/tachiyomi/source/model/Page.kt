@@ -4,17 +4,20 @@ import android.net.Uri
 import eu.kanade.tachiyomi.network.ProgressListener
 import eu.kanade.tachiyomi.ui.reader.ReaderChapter
 import rx.subjects.Subject
+import java.io.InputStream
 
-class Page(
+open class Page(
         val index: Int,
         val url: String = "",
         var imageUrl: String? = null,
-        @Transient var uri: Uri? = null
+        @Transient var uri: Uri? = null, // To be deleted alongside the old reader
+        @Transient var stream: (() -> InputStream)? = null
 ) : ProgressListener {
 
     val number: Int
         get() = index + 1
 
+    @Deprecated("To be deleted alongside the old reader")
     @Transient lateinit var chapter: ReaderChapter
 
     @Transient @Volatile var status: Int = 0

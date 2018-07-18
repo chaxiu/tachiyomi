@@ -9,6 +9,11 @@ class SettingsReaderController : SettingsController() {
     override fun setupPreferenceScreen(screen: PreferenceScreen) = with(screen) {
         titleRes = R.string.pref_category_reader
 
+        switchPreference {
+            key = Keys.useNewReader
+            title = "Use new reader"
+            defaultValue = false
+        }
         intListPreference {
             key = Keys.defaultViewer
             titleRes = R.string.pref_viewer_type

@@ -102,7 +102,7 @@ android {
 dependencies {
 
     // Modified dependencies
-    implementation 'com.github.inorichi:subsampling-scale-image-view:81b9d68'
+    implementation 'com.github.inorichi:subsampling-scale-image-view:4d0c87d'
     implementation 'com.github.inorichi:junrar-android:634c1f5'
 
     // Android support library
@@ -201,6 +201,7 @@ dependencies {
     implementation 'com.nightlynexus.viewstatepageradapter:viewstatepageradapter:1.0.4'
     implementation 'com.github.mthli:Slice:v1.2'
     implementation 'me.gujun.android.taggroup:library:1.4@aar'
+    implementation 'com.github.chrisbanes:PhotoView:2.1.3'
 
     // Conductor
     implementation "com.github.inorichi.Conductor:conductor:be8b3c5"

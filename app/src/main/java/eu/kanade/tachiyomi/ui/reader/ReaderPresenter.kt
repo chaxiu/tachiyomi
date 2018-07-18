@@ -106,7 +106,7 @@ class ReaderPresenter(
     /**
      * Chapter loader whose job is to obtain the chapter list and initialize every page.
      */
-    private val loader by lazy { ChapterLoader(downloadManager, manga, source) }
+    private val loader by lazy { ChapterLoader(downloadManager, chapterCache, manga, source) }
 
     /**
      * Subscription for appending a chapter to the reader (seamless mode).

@@ -14,7 +14,6 @@ import eu.kanade.tachiyomi.source.model.Page
 import eu.kanade.tachiyomi.ui.reader.ReaderActivity
 import eu.kanade.tachiyomi.ui.reader.viewer.base.PageDecodeErrorLayout
 import eu.kanade.tachiyomi.ui.reader.viewer.pager.horizontal.RightToLeftReader
-import eu.kanade.tachiyomi.ui.reader.viewer.pager.vertical.VerticalReader
 import eu.kanade.tachiyomi.util.inflate
 import kotlinx.android.synthetic.main.reader_pager_item.view.*
 import rx.Observable
@@ -69,7 +68,7 @@ class PageView @JvmOverloads constructor(context: Context, attrs: AttributeSet? 
             setMinimumTileDpi(180)
             setRegionDecoderClass(reader.regionDecoderClass)
             setBitmapDecoderClass(reader.bitmapDecoderClass)
-            setVerticalScrollingParent(reader is VerticalReader)
+//            setVerticalScrollingParent(reader is VerticalReader)
             setCropBorders(reader.cropBorders)
             setOnTouchListener { _, motionEvent -> reader.gestureDetector.onTouchEvent(motionEvent) }
             setOnLongClickListener { reader.onLongClick(page) }

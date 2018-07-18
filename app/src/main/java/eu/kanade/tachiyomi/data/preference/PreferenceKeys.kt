@@ -109,6 +109,8 @@ object PreferenceKeys {
 
     const val downloadBadge = "display_download_badge"
 
+    const val useNewReader = "use_new_reader"
+
     @Deprecated("Use the preferences of the source")
     fun sourceUsername(sourceId: Long) = "pref_source_username_$sourceId"
 

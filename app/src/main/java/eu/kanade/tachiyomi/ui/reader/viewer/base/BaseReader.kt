@@ -6,7 +6,7 @@ import eu.kanade.tachiyomi.data.preference.getOrDefault
 import eu.kanade.tachiyomi.source.model.Page
 import eu.kanade.tachiyomi.ui.reader.ReaderActivity
 import eu.kanade.tachiyomi.ui.reader.ReaderChapter
-import java.util.*
+import java.util.ArrayList
 
 /**
  * Base reader containing the common data that can be used by its implementations. It does not
@@ -19,11 +19,6 @@ abstract class BaseReader : Fragment() {
          * Image decoder.
          */
         const val IMAGE_DECODER = 0
-
-        /**
-         * Rapid decoder.
-         */
-        const val RAPID_DECODER = 1
 
         /**
          * Skia decoder.
@@ -233,13 +228,12 @@ abstract class BaseReader : Fragment() {
                 bitmapDecoderClass = IImageDecoder::class.java
                 regionDecoderClass = IImageRegionDecoder::class.java
             }
-            RAPID_DECODER -> {
-                bitmapDecoderClass = RapidImageDecoder::class.java
-                regionDecoderClass = RapidImageRegionDecoder::class.java
-            }
             SKIA_DECODER -> {
                 bitmapDecoderClass = SkiaImageDecoder::class.java
                 regionDecoderClass = SkiaImageRegionDecoder::class.java
+            }
+            else -> {
+                setDecoderClass(IMAGE_DECODER)
             }
         }
     }

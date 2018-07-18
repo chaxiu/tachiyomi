@@ -31,12 +31,17 @@ import eu.kanade.tachiyomi.widget.SimpleAnimationListener
 import eu.kanade.tachiyomi.widget.SimpleSeekBarListener
 import kotlinx.android.synthetic.main.reader_activity.*
 import me.zhanghai.android.systemuihelper.SystemUiHelper
-import me.zhanghai.android.systemuihelper.SystemUiHelper.*
+import me.zhanghai.android.systemuihelper.SystemUiHelper.FLAG_IMMERSIVE_STICKY
+import me.zhanghai.android.systemuihelper.SystemUiHelper.FLAG_LAYOUT_IN_SCREEN_OLDER_DEVICES
+import me.zhanghai.android.systemuihelper.SystemUiHelper.LEVEL_HIDE_STATUS_BAR
+import me.zhanghai.android.systemuihelper.SystemUiHelper.LEVEL_IMMERSIVE
 import nucleus.factory.RequiresPresenter
 import rx.Subscription
 import rx.android.schedulers.AndroidSchedulers
 import rx.subscriptions.CompositeSubscription
 import timber.log.Timber
+import uy.kohesive.injekt.Injekt
+import uy.kohesive.injekt.api.get
 import uy.kohesive.injekt.injectLazy
 import java.io.File
 import java.text.DecimalFormat
@@ -58,8 +63,13 @@ class ReaderActivity : BaseRxActivity<ReaderPresenter>() {
         const val MENU_VISIBLE = "menu_visible"
 
         fun newIntent(context: Context, manga: Manga, chapter: Chapter): Intent {
-            SharedData.put(ReaderEvent(manga, chapter))
-            return Intent(context, ReaderActivity::class.java)
+            val useNewReader = Injekt.get<PreferencesHelper>().useNewReader().getOrDefault()
+            return if (useNewReader) {
+                eu.kanade.tachiyomi.ui.reader2.ReaderActivity.newIntent(context, manga, chapter)
+            } else {
+                SharedData.put(ReaderEvent(manga, chapter))
+                return Intent(context, ReaderActivity::class.java)
+            }
         }
     }
 
