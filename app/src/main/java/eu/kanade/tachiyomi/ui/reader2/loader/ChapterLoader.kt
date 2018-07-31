@@ -10,6 +10,7 @@ import eu.kanade.tachiyomi.ui.reader2.ReaderPage
 import rx.Observable
 import rx.android.schedulers.AndroidSchedulers
 import rx.schedulers.Schedulers
+import timber.log.Timber
 
 class ChapterLoader(
         private val downloadManager: DownloadManager,
@@ -24,6 +25,7 @@ class ChapterLoader(
             .doOnNext { it.state = ReaderChapter.State.Loading }
             .observeOn(Schedulers.io())
             .flatMap {
+                Timber.w("Loading pages for ${chapter.chapter.name}")
                 val loader = getPageLoader(it)
                 chapter.pageLoader = loader
 
@@ -39,11 +41,18 @@ class ChapterLoader(
 
                 chapter.state = ReaderChapter.State.Loaded(pages)
 
+                // If the chapter is partially read, set the starting page to the last the user read
+                // otherwise use the requested page.
+                if (!chapter.chapter.read) {
+                    chapter.requestedPage = chapter.chapter.last_page_read
+                }
+
                 // Now that the number of pages is known, fix the requested page if the last one
                 // was requested.
-                if (chapter.requestedPage == -1) {
-                    chapter.requestedPage = pages.lastIndex
-                }
+                // TODO probably not needed anymore
+//                if (chapter.requestedPage == -1) {
+//                    chapter.requestedPage = pages.lastIndex
+//                }
             }
             .doOnError { chapter.state = ReaderChapter.State.Error(it) }
             .map { chapter }

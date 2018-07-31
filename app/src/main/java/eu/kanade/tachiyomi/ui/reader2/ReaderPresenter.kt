@@ -1,5 +1,6 @@
 package eu.kanade.tachiyomi.ui.reader2
 
+import android.os.Bundle
 import com.jakewharton.rxrelay.BehaviorRelay
 import eu.kanade.tachiyomi.data.database.DatabaseHelper
 import eu.kanade.tachiyomi.data.database.models.Chapter
@@ -9,8 +10,8 @@ import eu.kanade.tachiyomi.data.preference.PreferencesHelper
 import eu.kanade.tachiyomi.source.SourceManager
 import eu.kanade.tachiyomi.ui.base.presenter.BasePresenter
 import eu.kanade.tachiyomi.ui.reader2.loader.ChapterLoader
+import rx.Completable
 import rx.Observable
-import rx.Single
 import rx.Subscription
 import rx.android.schedulers.AndroidSchedulers
 import rx.schedulers.Schedulers
@@ -27,7 +28,7 @@ class ReaderPresenter(
 
     private var manga: Manga? = null
 
-    private var initialChapterId: Long? = null
+    private var chapterId = -1L
 
     private var loader: ChapterLoader? = null
 
@@ -52,28 +53,48 @@ class ReaderPresenter(
         dbChapters.sortedWith(Comparator { c1, c2 -> sortFunction(c1.chapter, c2.chapter) })
     }
 
+    override fun onCreate(savedState: Bundle?) {
+        super.onCreate(savedState)
+        if (savedState != null) {
+            chapterId = savedState.getLong(::chapterId.name, -1)
+        }
+    }
+
+    override fun onSave(state: Bundle) {
+        super.onSave(state)
+        val currentChapter = viewerChaptersRelay.value?.currChapter
+        if (currentChapter != null) {
+            currentChapter.requestedPage = currentChapter.chapter.last_page_read
+            state.putLong(::chapterId.name, currentChapter.chapter.id!!)
+        }
+    }
+
     override fun onDestroy() {
         super.onDestroy()
-        viewerChaptersRelay.value?.unref()
+        val currentChapters = viewerChaptersRelay.value
+        if (currentChapters != null) {
+            currentChapters.unref()
+            saveChapterProgress(currentChapters.currChapter)
+        }
     }
 
     fun needsInit(): Boolean {
-        return manga == null || initialChapterId == null
+        return manga == null
     }
 
-    fun init(manga: Manga, chapterId: Long) {
-        if (this.manga?.id == manga.id && initialChapterId == chapterId) return
+    fun init(manga: Manga, initialChapterId: Long) {
+        if (!needsInit()) return
 
         this.manga = manga
-        this.initialChapterId = chapterId
+        if (chapterId == -1L) chapterId = initialChapterId
+
         val source = sourceManager.getOrStub(manga.source)
         loader = ChapterLoader(downloadManager, manga, source)
 
         Observable.just(manga).subscribeLatestCache(ReaderActivity::setManga)
         viewerChaptersRelay.subscribeLatestCache(ReaderActivity::setChapters)
 
-        Single.fromCallable { load(chapterList.first { chapterId == it.chapter.id }) }
-            .toCompletable()
+        Completable.fromCallable { load(chapterList.first { chapterId == it.chapter.id }) }
             .onErrorComplete()
             .subscribeOn(Schedulers.io())
             .subscribe()
@@ -133,11 +154,10 @@ class ReaderPresenter(
         Timber.w("Loading adjacent ${chapter.chapter.url}")
 
         val loader = loader ?: return
-        var initialPageSet = false
 
         activeChapterSubscription?.unsubscribe()
         activeChapterSubscription = getLoadObservable(loader, chapter)
-            .subscribeFirst({ view, chapters ->
+            .subscribeFirst({ view, _ ->
                 view.moveToPageIndex(0)
             })
     }
@@ -145,10 +165,38 @@ class ReaderPresenter(
     fun onPageSelected(page: ReaderPage) {
         val currentChapters = viewerChaptersRelay.value ?: return
 
-        if (page.chapter2 != currentChapters.currChapter) {
-            Timber.w("Setting ${page.chapter2.chapter.url} as active")
-            load(page.chapter2)
+        val selectedChapter = page.chapter2
+
+        // Save last page read and mark as read if needed
+        selectedChapter.chapter.last_page_read = page.index
+        if (selectedChapter.pages?.lastIndex == page.index) {
+            selectedChapter.chapter.read = true
         }
+
+        if (selectedChapter != currentChapters.currChapter) {
+            Timber.w("Setting ${selectedChapter.chapter.url} as active")
+            onChapterChanged(currentChapters.currChapter, selectedChapter)
+            load(selectedChapter)
+        }
+    }
+
+    private fun onChapterChanged(fromChapter: ReaderChapter, toChapter: ReaderChapter) {
+        saveChapterProgress(fromChapter)
+    }
+
+    private fun saveChapterProgress(chapter: ReaderChapter) {
+        db.updateChapterProgress(chapter.chapter).asRxCompletable()
+            .onErrorComplete()
+            .subscribeOn(Schedulers.io())
+            .subscribe()
+    }
+
+    /**
+     * Called when the application is going to background
+     */
+    fun saveCurrentProgress() {
+        val currentChapters = viewerChaptersRelay.value ?: return
+        saveChapterProgress(currentChapters.currChapter)
     }
 
     fun preloadNextChapter() {

@@ -6,6 +6,7 @@ import eu.kanade.tachiyomi.source.online.HttpSource
 import eu.kanade.tachiyomi.ui.reader2.ReaderChapter
 import eu.kanade.tachiyomi.ui.reader2.ReaderPage
 import eu.kanade.tachiyomi.util.plusAssign
+import rx.Completable
 import rx.Observable
 import rx.schedulers.Schedulers
 import rx.subjects.PublishSubject
@@ -101,6 +102,15 @@ class HttpPageLoader(
         super.recycle()
         subscriptions.unsubscribe()
         queue.clear()
+
+        // Cache current page list progress for online chapters to allow a faster reopen
+        val pages = chapter.pages
+        if (pages != null) {
+            Completable.fromAction { chapterCache.putPageListToCache(chapter.chapter, pages) }
+                .onErrorComplete()
+                .subscribeOn(Schedulers.io())
+                .subscribe()
+        }
     }
 
     private data class PriorityPage(

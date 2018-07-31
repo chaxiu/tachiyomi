@@ -90,6 +90,13 @@ class ReaderActivity : BaseRxActivity<ReaderPresenter>() {
         viewer?.destroy()
     }
 
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        if (!isChangingConfigurations) {
+            presenter.saveCurrentProgress()
+        }
+    }
+
     /**
      * Methods called from presenter or this activity.
      */
