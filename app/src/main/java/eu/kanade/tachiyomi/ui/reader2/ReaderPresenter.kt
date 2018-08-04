@@ -18,15 +18,17 @@ import rx.schedulers.Schedulers
 import timber.log.Timber
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
+import java.util.concurrent.TimeUnit
 
 class ReaderPresenter(
         private val db: DatabaseHelper = Injekt.get(),
         private val sourceManager: SourceManager = Injekt.get(),
         private val downloadManager: DownloadManager = Injekt.get(),
-        private val preferences: PreferencesHelper = Injekt.get()
+        val preferences: PreferencesHelper = Injekt.get()
 ) : BasePresenter<ReaderActivity>() {
 
-    private var manga: Manga? = null
+    var manga: Manga? = null
+        private set
 
     private var chapterId = -1L
 
@@ -102,6 +104,10 @@ class ReaderPresenter(
     }
 
     private fun preload(chapter: ReaderChapter) {
+        if (chapter.state != ReaderChapter.State.Wait && chapter.state !is ReaderChapter.State.Error) {
+            return
+        }
+
         Timber.w("Preloading ${chapter.chapter.url}")
 
         val loader = loader ?: return
@@ -109,7 +115,7 @@ class ReaderPresenter(
         loader.loadChapter(chapter)
             .observeOn(AndroidSchedulers.mainThread())
             // Update current chapters whenever a chapter is preloaded
-            .doOnNext { viewerChaptersRelay.value?.let(viewerChaptersRelay::call) }
+            .doOnCompleted { viewerChaptersRelay.value?.let(viewerChaptersRelay::call) }
             .subscribe()
             .also(::add)
     }
@@ -119,7 +125,7 @@ class ReaderPresenter(
             chapter: ReaderChapter
     ): Observable<ViewerChapters> {
         return loader.loadChapter(chapter)
-            .switchIfEmpty(Observable.just(chapter))
+            .andThen(Observable.just(chapter))
             .map {
                 val chapterPos = chapterList.indexOf(chapter)
 
@@ -221,12 +227,33 @@ class ReaderPresenter(
         return true
     }
 
-    fun getDefaultViewer(): Int {
-        return preferences.defaultViewer()
-    }
-
     fun getCurrentChapter(): ReaderChapter? {
         return viewerChaptersRelay.value?.currChapter
+    }
+
+    fun getMangaViewer(): Int {
+        val manga = manga ?: return preferences.defaultViewer()
+        return if (manga.viewer == 0) preferences.defaultViewer() else manga.viewer
+    }
+
+    fun setMangaViewer(viewer: Int) {
+        val manga = manga ?: return
+        manga.viewer = viewer
+        db.insertManga(manga).executeAsBlocking()
+
+        Observable.timer(250, TimeUnit.MILLISECONDS, AndroidSchedulers.mainThread())
+            .subscribeFirst({ view, _ ->
+                val currChapters = viewerChaptersRelay.value
+                if (currChapters != null) {
+                    // Save current page
+                    val currChapter = currChapters.currChapter
+                    currChapter.requestedPage = currChapter.chapter.last_page_read
+
+                    // Emit manga and chapters to the new viewer
+                    view.setManga(manga)
+                    view.setChapters(currChapters)
+                }
+            })
     }
 
 }

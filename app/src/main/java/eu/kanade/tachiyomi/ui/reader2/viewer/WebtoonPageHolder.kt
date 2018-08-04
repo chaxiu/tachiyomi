@@ -215,7 +215,7 @@ class WebtoonPageHolder(
     /**
      * Called when the page is queued.
      */
-    private fun setQueued() = with(view) {
+    private fun setQueued() {
         progress_container.visibility = View.VISIBLE
         progress_text.visibility = View.INVISIBLE
         retry_container.visibility = View.GONE
@@ -228,7 +228,7 @@ class WebtoonPageHolder(
     /**
      * Called when the page is loading.
      */
-    private fun setLoading() = with(view) {
+    private fun setLoading() {
         progress_container.visibility = View.VISIBLE
         progress_text.visibility = View.VISIBLE
         progress_text.setText(R.string.downloading)
@@ -237,7 +237,7 @@ class WebtoonPageHolder(
     /**
      * Called when the page is downloading
      */
-    private fun setDownloading() = with(view) {
+    private fun setDownloading() {
         progress_container.visibility = View.VISIBLE
         progress_text.visibility = View.VISIBLE
     }
@@ -245,7 +245,7 @@ class WebtoonPageHolder(
     /**
      * Called when the page is ready.
      */
-    private fun setImage() = with(view) {
+    private fun setImage() {
         val stream = page?.stream ?: return
 
         progress_text.visibility = View.INVISIBLE
@@ -256,7 +256,7 @@ class WebtoonPageHolder(
     /**
      * Called when the page has an error.
      */
-    private fun setError() = with(view) {
+    private fun setError() {
         progress_container.visibility = View.GONE
         retry_container.visibility = View.VISIBLE
     }

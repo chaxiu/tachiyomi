@@ -2,6 +2,7 @@ package eu.kanade.tachiyomi.ui.reader2.viewer
 
 import android.os.Build
 import android.support.v7.widget.RecyclerView
+import android.support.v7.widget.WebtoonLayoutManager
 import android.util.DisplayMetrics
 import android.view.Display
 import android.view.View
@@ -10,7 +11,6 @@ import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import eu.kanade.tachiyomi.ui.reader2.ReaderActivity
 import eu.kanade.tachiyomi.ui.reader2.ReaderPage
 import eu.kanade.tachiyomi.ui.reader2.ViewerChapters
-import eu.kanade.tachiyomi.widget.PreCachingLayoutManager
 import rx.subscriptions.CompositeSubscription
 import timber.log.Timber
 
@@ -20,7 +20,7 @@ class WebtoonViewer(activity: ReaderActivity) : BaseViewer(activity) {
 
     private val adapter = WebtoonAdapter(this)
 
-    private val layoutManager = PreCachingLayoutManager(activity).apply {
+    private val layoutManager = WebtoonLayoutManager(activity).apply {
         val screenHeight = activity.resources.displayMetrics.heightPixels
         extraLayoutSpace = screenHeight / 2
         scrollDistance = screenHeight * 3 / 4
@@ -55,7 +55,7 @@ class WebtoonViewer(activity: ReaderActivity) : BaseViewer(activity) {
         recycler.adapter = adapter
         recycler.addOnScrollListener(object : RecyclerView.OnScrollListener() {
             override fun onScrolled(recyclerView: RecyclerView?, dx: Int, dy: Int) {
-                val index = layoutManager.findLastCompletelyVisibleItemPosition()
+                val index = layoutManager.findLastEndVisibleItemPosition()
                 val item = adapter.items.getOrNull(index)
                 if (item != null && currentPage != item) {
                     currentPage = item
@@ -74,16 +74,14 @@ class WebtoonViewer(activity: ReaderActivity) : BaseViewer(activity) {
                 }
             }
         })
-//        recycler.tapListener = { event ->
-//            val positionX = event.x
-//            if (positionX < recycler.width * PagerReader.LEFT_REGION) {
-//                moveUp()
-//            } else if (positionX > recycler.width * PagerReader.RIGHT_REGION) {
-//                moveDown()
-//            } else {
-//                activity.toggleMenu()
-//            }
-//        }
+        recycler.tapListener = { event ->
+            val positionX = event.x
+            when {
+                positionX < recycler.width * 0.33 -> moveUp()
+                positionX > recycler.width * 0.66 -> moveDown()
+                else -> activity.toggleMenu()
+            }
+        }
 
         frame.layoutParams = ViewGroup.LayoutParams(MATCH_PARENT, MATCH_PARENT)
         frame.addView(recycler)

@@ -7,6 +7,7 @@ import eu.kanade.tachiyomi.source.Source
 import eu.kanade.tachiyomi.source.online.HttpSource
 import eu.kanade.tachiyomi.ui.reader2.ReaderChapter
 import eu.kanade.tachiyomi.ui.reader2.ReaderPage
+import rx.Completable
 import rx.Observable
 import rx.android.schedulers.AndroidSchedulers
 import rx.schedulers.Schedulers
@@ -18,11 +19,12 @@ class ChapterLoader(
         private val source: Source
 ) {
 
-    fun loadChapter(chapter: ReaderChapter): Observable<ReaderChapter> {
+    fun loadChapter(chapter: ReaderChapter): Completable {
+        if (chapter.state is ReaderChapter.State.Loaded) {
+            return Completable.complete()
+        }
+
         return Observable.just(chapter)
-            .observeOn(AndroidSchedulers.mainThread())
-            .filter { it.state !is ReaderChapter.State.Loaded }
-            .doOnNext { it.state = ReaderChapter.State.Loading }
             .observeOn(Schedulers.io())
             .flatMap {
                 Timber.w("Loading pages for ${chapter.chapter.name}")
@@ -54,9 +56,8 @@ class ChapterLoader(
 //                    chapter.requestedPage = pages.lastIndex
 //                }
             }
+            .toCompletable()
             .doOnError { chapter.state = ReaderChapter.State.Error(it) }
-            .map { chapter }
-            .onErrorReturn { chapter }
     }
 
     private fun getPageLoader(chapter: ReaderChapter): PageLoader {
