@@ -30,7 +30,10 @@ class ZipPageLoader(file: File) : PageLoader() {
             .sortedWith(Comparator<ZipEntry> { f1, f2 -> comparator.compare(f1.name, f2.name) })
             .mapIndexed { i, entry ->
                 val streamFn = { zip.getInputStream(entry) }
-                Page(i, stream = streamFn).apply { status = Page.READY }
+                Page(i).apply {
+                    stream = streamFn
+                    status = Page.READY
+                }
             }
     }
 

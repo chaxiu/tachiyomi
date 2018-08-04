@@ -10,9 +10,10 @@ open class Page(
         val index: Int,
         val url: String = "",
         var imageUrl: String? = null,
-        @Transient var uri: Uri? = null, // To be deleted alongside the old reader
-        @Transient var stream: (() -> InputStream)? = null
+        @Transient var uri: Uri? = null // Deprecated but can't be deleted due to extensions
 ) : ProgressListener {
+
+    @Transient var stream: (() -> InputStream)? = null
 
     val number: Int
         get() = index + 1

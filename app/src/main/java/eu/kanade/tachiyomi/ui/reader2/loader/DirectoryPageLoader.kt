@@ -22,7 +22,10 @@ class DirectoryPageLoader(val file: File) : PageLoader() {
             .sortedWith(Comparator<File> { f1, f2 -> comparator.compare(f1.name, f2.name) })
             .mapIndexed { i, file ->
                 val streamFn = { FileInputStream(file) }
-                Page(i, stream = streamFn).apply { status = Page.READY }
+                Page(i).apply {
+                    stream = streamFn
+                    status = Page.READY
+                }
             }
     }
 

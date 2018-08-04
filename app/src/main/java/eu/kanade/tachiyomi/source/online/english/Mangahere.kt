@@ -11,7 +11,8 @@ import java.security.SecureRandom
 import java.security.cert.X509Certificate
 import java.text.ParseException
 import java.text.SimpleDateFormat
-import java.util.*
+import java.util.Calendar
+import java.util.Locale
 import javax.net.ssl.SSLContext
 import javax.net.ssl.X509TrustManager
 
@@ -191,7 +192,8 @@ class Mangahere : ParsedHttpSource() {
         val pages = mutableListOf<Page>()
         document.select("select.wid60").first()?.getElementsByTag("option")?.forEach {
             if (!it.attr("value").contains("featured.html")) {
-                pages.add(Page(pages.size, "http:" + it.attr("value")))
+                val page = Page(pages.size, "http:" + it.attr("value"))
+                pages.add(page)
             }
         }
         pages.getOrNull(0)?.imageUrl = imageUrlParse(document)

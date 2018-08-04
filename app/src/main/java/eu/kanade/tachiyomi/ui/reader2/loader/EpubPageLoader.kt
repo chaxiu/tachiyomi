@@ -38,7 +38,10 @@ class EpubPageLoader(file: File) : PageLoader() {
         return getImagesFromPages(zip, pages, hrefs)
             .mapIndexed { i, path ->
                 val streamFn = { zip.getInputStream(zip.getEntry(path)) }
-                Page(i, stream = streamFn).apply { status = Page.READY }
+                Page(i).apply {
+                    stream = streamFn
+                    status = Page.READY
+                }
             }
     }
 

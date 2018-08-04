@@ -30,7 +30,10 @@ class RarPageLoader(file: File) : PageLoader() {
             .sortedWith(Comparator<FileHeader> { f1, f2 -> comparator.compare(f1.fileNameString, f2.fileNameString) })
             .mapIndexed { i, header ->
                 val streamFn = { archive.getInputStream(header) }
-                Page(i, stream = streamFn).apply { status = Page.READY }
+                Page(i).apply {
+                    stream = streamFn
+                    status = Page.READY
+                }
             }
     }
 
