@@ -8,10 +8,7 @@ import android.content.res.Configuration
 import android.graphics.Color
 import android.os.Build
 import android.os.Bundle
-import android.view.Menu
-import android.view.MenuItem
-import android.view.View
-import android.view.WindowManager
+import android.view.*
 import android.view.animation.Animation
 import android.view.animation.AnimationUtils
 import android.widget.SeekBar
@@ -55,7 +52,8 @@ class ReaderActivity : BaseRxActivity<ReaderPresenter>() {
 
     val maxBitmapSize by lazy { GLUtil.getMaxTextureSize() }
 
-    private var menuVisible = false
+    var menuVisible = false
+        private set
 
     private var systemUi: SystemUiHelper? = null
 
@@ -141,6 +139,15 @@ class ReaderActivity : BaseRxActivity<ReaderPresenter>() {
             else -> return super.onOptionsItemSelected(item)
         }
         return true
+    }
+
+    override fun dispatchKeyEvent(event: KeyEvent): Boolean {
+        return if (menuVisible) {
+            super.dispatchKeyEvent(event)
+        } else {
+            val handled = viewer?.handleKeyEvent(event) ?: false
+            handled || super.dispatchKeyEvent(event)
+        }
     }
 
     private fun initializeMenu() {

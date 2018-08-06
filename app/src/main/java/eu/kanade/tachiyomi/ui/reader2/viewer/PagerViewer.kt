@@ -1,6 +1,7 @@
 package eu.kanade.tachiyomi.ui.reader2.viewer
 
 import android.support.v4.view.ViewPager
+import android.view.KeyEvent
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup.LayoutParams
@@ -188,6 +189,36 @@ abstract class PagerViewer(activity: ReaderActivity) : BaseViewer(activity) {
         if (position != -1) {
             pager.setCurrentItem(position, true)
         }
+    }
+
+    override fun handleKeyEvent(event: KeyEvent): Boolean {
+        fun isUp() = event.action == KeyEvent.ACTION_UP
+
+        when (event.keyCode) {
+            KeyEvent.KEYCODE_VOLUME_DOWN -> {
+                if (activity.menuVisible) {
+                    return false
+                } else if (config.volumeKeysEnabled && isUp()) {
+                    if (!config.volumeKeysInverted) moveDown() else moveUp()
+                }
+            }
+            KeyEvent.KEYCODE_VOLUME_UP -> {
+                if (activity.menuVisible) {
+                    return false
+                } else if (config.volumeKeysEnabled && isUp()) {
+                    if (!config.volumeKeysInverted) moveUp() else moveDown()
+                }
+            }
+            KeyEvent.KEYCODE_DPAD_RIGHT -> if (isUp()) moveRight()
+            KeyEvent.KEYCODE_DPAD_LEFT -> if (isUp()) moveLeft()
+            KeyEvent.KEYCODE_DPAD_DOWN -> if (isUp()) moveDown()
+            KeyEvent.KEYCODE_DPAD_UP -> if (isUp()) moveUp()
+            KeyEvent.KEYCODE_PAGE_DOWN -> if (isUp()) moveDown()
+            KeyEvent.KEYCODE_PAGE_UP -> if (isUp()) moveUp()
+            KeyEvent.KEYCODE_MENU -> activity.toggleMenu()
+            else -> return false
+        }
+        return true
     }
 
     private fun refreshAdapter() {

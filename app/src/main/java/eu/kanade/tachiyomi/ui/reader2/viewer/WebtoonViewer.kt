@@ -5,6 +5,7 @@ import android.support.v7.widget.RecyclerView
 import android.support.v7.widget.WebtoonLayoutManager
 import android.util.DisplayMetrics
 import android.view.Display
+import android.view.KeyEvent
 import android.view.View
 import android.view.ViewGroup
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
@@ -31,6 +32,8 @@ class WebtoonViewer(activity: ReaderActivity) : BaseViewer(activity) {
     private val frame = WebtoonFrame(activity)
 
     private val recycler = WebtoonRecyclerView(activity)
+
+    val config = PagerConfig()
 
     val subscriptions = CompositeSubscription()
 
@@ -101,6 +104,7 @@ class WebtoonViewer(activity: ReaderActivity) : BaseViewer(activity) {
 
     override fun destroy() {
         super.destroy()
+        config.unsubscribe()
         subscriptions.unsubscribe()
     }
 
@@ -167,6 +171,36 @@ class WebtoonViewer(activity: ReaderActivity) : BaseViewer(activity) {
 
     override fun moveToPrevChapter() {
         // TODO
+    }
+
+    override fun handleKeyEvent(event: KeyEvent): Boolean {
+        fun isUp() = event.action == KeyEvent.ACTION_UP
+
+        when (event.keyCode) {
+            KeyEvent.KEYCODE_VOLUME_DOWN -> {
+                if (activity.menuVisible) {
+                    return false
+                } else if (config.volumeKeysEnabled && isUp()) {
+                    if (!config.volumeKeysInverted) moveDown() else moveUp()
+                }
+            }
+            KeyEvent.KEYCODE_VOLUME_UP -> {
+                if (activity.menuVisible) {
+                    return false
+                } else if (config.volumeKeysEnabled && isUp()) {
+                    if (!config.volumeKeysInverted) moveUp() else moveDown()
+                }
+            }
+            KeyEvent.KEYCODE_DPAD_RIGHT -> if (isUp()) moveRight()
+            KeyEvent.KEYCODE_DPAD_LEFT -> if (isUp()) moveLeft()
+            KeyEvent.KEYCODE_DPAD_DOWN -> if (isUp()) moveDown()
+            KeyEvent.KEYCODE_DPAD_UP -> if (isUp()) moveUp()
+            KeyEvent.KEYCODE_PAGE_DOWN -> if (isUp()) moveDown()
+            KeyEvent.KEYCODE_PAGE_UP -> if (isUp()) moveUp()
+            KeyEvent.KEYCODE_MENU -> activity.toggleMenu()
+            else -> return false
+        }
+        return true
     }
 
 }

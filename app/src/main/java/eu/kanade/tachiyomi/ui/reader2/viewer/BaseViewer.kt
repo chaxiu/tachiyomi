@@ -1,5 +1,6 @@
 package eu.kanade.tachiyomi.ui.reader2.viewer
 
+import android.view.KeyEvent
 import android.view.View
 import eu.kanade.tachiyomi.ui.reader2.ReaderActivity
 import eu.kanade.tachiyomi.ui.reader2.model.ReaderPage
@@ -26,4 +27,9 @@ abstract class BaseViewer(val activity: ReaderActivity) {
     abstract fun moveToNextChapter()
 
     abstract fun moveToPrevChapter()
+
+    open fun handleKeyEvent(event: KeyEvent): Boolean {
+        return false
+    }
+
 }

@@ -6,8 +6,6 @@ import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.widget.FrameLayout
 import com.davemorrissey.labs.subscaleview.ImageSource
 import com.davemorrissey.labs.subscaleview.SubsamplingScaleImageView
-import com.davemorrissey.labs.subscaleview.decoder.IImageDecoder
-import com.davemorrissey.labs.subscaleview.decoder.IImageRegionDecoder
 import eu.kanade.tachiyomi.R
 import eu.kanade.tachiyomi.source.model.Page
 import eu.kanade.tachiyomi.ui.base.holder.BaseViewHolder
@@ -53,19 +51,17 @@ class WebtoonPageHolder(
     private var decodeErrorLayout: View? = null
 
     init {
+        val config = adapter.viewer.config
+
         with(image_view) {
             setMaxTileSize(readerActivity.maxBitmapSize)
-            setDoubleTapZoomStyle(SubsamplingScaleImageView.ZOOM_FOCUS_FIXED)
-//            setDoubleTapZoomDuration(webtoonReader.doubleTapAnimDuration.toInt())
             setPanLimit(SubsamplingScaleImageView.PAN_LIMIT_INSIDE)
             setMinimumScaleType(SubsamplingScaleImageView.SCALE_TYPE_FIT_WIDTH)
             setMinimumDpi(90)
             setMinimumTileDpi(180)
-            setRegionDecoderClass(IImageRegionDecoder::class.java)
-            setBitmapDecoderClass(IImageDecoder::class.java)
-//            setCropBorders(webtoonReader.cropBorders)
-//            setVerticalScrollingParent(true)
-//            setOnLongClickListener { webtoonReader.onLongClick(page) }
+            setBitmapDecoderClass(config.bitmapDecoder)
+            setRegionDecoderClass(config.regionDecoder)
+            setCropBorders(config.imageCropBorders)
             setOnImageEventListener(object : SubsamplingScaleImageView.DefaultOnImageEventListener() {
                 override fun onReady() {
                     onImageDecoded()
