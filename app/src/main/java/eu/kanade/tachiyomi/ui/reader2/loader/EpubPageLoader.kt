@@ -1,7 +1,7 @@
 package eu.kanade.tachiyomi.ui.reader2.loader
 
 import eu.kanade.tachiyomi.source.model.Page
-import eu.kanade.tachiyomi.ui.reader2.ReaderPage
+import eu.kanade.tachiyomi.ui.reader2.model.ReaderPage
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
 import rx.Observable
@@ -10,26 +10,14 @@ import java.util.zip.ZipFile
 
 class EpubPageLoader(file: File) : PageLoader() {
 
-    val zip = ZipFile(file)
+    private val zip = ZipFile(file)
 
     override fun recycle() {
         super.recycle()
         zip.close()
     }
 
-    override fun getPages(): Observable<List<Page>> {
-        return Observable.fromCallable { loadPages() }
-    }
-
-    override fun getPage(page: ReaderPage): Observable<Int> {
-        return Observable.just(if (isRecycled) {
-            Page.ERROR
-        } else {
-            Page.READY
-        })
-    }
-
-    private fun loadPages(): List<Page> {
+    override fun getPages(): Observable<List<ReaderPage>> {
         val allEntries = zip.entries().toList()
         val ref = getPackageHref(zip)
         val doc = getPackageDocument(zip, ref)
@@ -38,11 +26,20 @@ class EpubPageLoader(file: File) : PageLoader() {
         return getImagesFromPages(zip, pages, hrefs)
             .mapIndexed { i, path ->
                 val streamFn = { zip.getInputStream(zip.getEntry(path)) }
-                Page(i).apply {
+                ReaderPage(i).apply {
                     stream = streamFn
                     status = Page.READY
                 }
             }
+            .let { Observable.just(it) }
+    }
+
+    override fun getPage(page: ReaderPage): Observable<Int> {
+        return Observable.just(if (isRecycled) {
+            Page.ERROR
+        } else {
+            Page.READY
+        })
     }
 
     /**

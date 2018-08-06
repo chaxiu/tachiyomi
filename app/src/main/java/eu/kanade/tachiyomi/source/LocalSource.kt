@@ -4,10 +4,7 @@ import android.content.Context
 import android.net.Uri
 import eu.kanade.tachiyomi.R
 import eu.kanade.tachiyomi.source.model.*
-import eu.kanade.tachiyomi.util.ChapterRecognition
-import eu.kanade.tachiyomi.util.DiskUtil
-import eu.kanade.tachiyomi.util.RarContentProvider
-import eu.kanade.tachiyomi.util.ZipContentProvider
+import eu.kanade.tachiyomi.util.*
 import junrar.Archive
 import junrar.rarfile.FileHeader
 import net.greypanther.natsort.CaseInsensitiveSimpleNaturalComparator
@@ -205,7 +202,7 @@ class LocalSource(private val context: Context) : CatalogueSource {
     private fun loadDirectory(file: File): List<Page> {
         val comparator = CaseInsensitiveSimpleNaturalComparator.getInstance<String>()
         return file.listFiles()
-            .filter { !it.isDirectory && DiskUtil.isImage(it.name, { FileInputStream(it) }) }
+            .filter { !it.isDirectory && ImageUtil.isImage(it.name, { FileInputStream(it) }) }
             .sortedWith(Comparator<File> { f1, f2 -> comparator.compare(f1.name, f2.name) })
             .map { Uri.fromFile(it) }
             .mapIndexed { i, uri -> Page(i, uri = uri).apply { status = Page.READY } }
@@ -215,7 +212,7 @@ class LocalSource(private val context: Context) : CatalogueSource {
         val comparator = CaseInsensitiveSimpleNaturalComparator.getInstance<String>()
         return ZipFile(file).use { zip ->
             zip.entries().toList()
-                .filter { !it.isDirectory && DiskUtil.isImage(it.name, { zip.getInputStream(it) }) }
+                .filter { !it.isDirectory && ImageUtil.isImage(it.name, { zip.getInputStream(it) }) }
                 .sortedWith(Comparator<ZipEntry> { f1, f2 -> comparator.compare(f1.name, f2.name) })
                 .map { Uri.parse("content://${ZipContentProvider.PROVIDER}${file.absolutePath}!/${it.name}") }
                 .mapIndexed { i, uri -> Page(i, uri = uri).apply { status = Page.READY } }
@@ -226,7 +223,8 @@ class LocalSource(private val context: Context) : CatalogueSource {
         val comparator = CaseInsensitiveSimpleNaturalComparator.getInstance<String>()
         return Archive(file).use { archive ->
             archive.fileHeaders
-                .filter { !it.isDirectory && DiskUtil.isImage(it.fileNameString, { archive.getInputStream(it) }) }
+                .filter { !it.isDirectory && ImageUtil.isImage(it.fileNameString, { archive
+                    .getInputStream(it) }) }
                 .sortedWith(Comparator<FileHeader> { f1, f2 -> comparator.compare(f1.fileNameString, f2.fileNameString) })
                 .map { Uri.parse("content://${RarContentProvider.PROVIDER}${file.absolutePath}!-/${it.fileNameString}") }
                 .mapIndexed { i, uri -> Page(i, uri = uri).apply { status = Page.READY } }

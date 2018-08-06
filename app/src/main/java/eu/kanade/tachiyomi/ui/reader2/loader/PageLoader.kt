@@ -1,8 +1,7 @@
 package eu.kanade.tachiyomi.ui.reader2.loader
 
 import android.support.annotation.CallSuper
-import eu.kanade.tachiyomi.source.model.Page
-import eu.kanade.tachiyomi.ui.reader2.ReaderPage
+import eu.kanade.tachiyomi.ui.reader2.model.ReaderPage
 import rx.Observable
 
 abstract class PageLoader {
@@ -15,7 +14,7 @@ abstract class PageLoader {
         isRecycled = true
     }
 
-    abstract fun getPages(): Observable<List<Page>>
+    abstract fun getPages(): Observable<List<ReaderPage>>
 
     abstract fun getPage(page: ReaderPage): Observable<Int>
 

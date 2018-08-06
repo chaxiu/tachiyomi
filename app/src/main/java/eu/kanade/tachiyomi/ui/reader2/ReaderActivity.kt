@@ -21,9 +21,16 @@ import eu.kanade.tachiyomi.data.database.models.Manga
 import eu.kanade.tachiyomi.data.preference.PreferencesHelper
 import eu.kanade.tachiyomi.data.preference.getOrDefault
 import eu.kanade.tachiyomi.ui.base.activity.BaseRxActivity
+import eu.kanade.tachiyomi.ui.reader2.ReaderPresenter.SetAsCoverResult.AddToLibraryFirst
+import eu.kanade.tachiyomi.ui.reader2.ReaderPresenter.SetAsCoverResult.Error
+import eu.kanade.tachiyomi.ui.reader2.ReaderPresenter.SetAsCoverResult.Success
+import eu.kanade.tachiyomi.ui.reader2.model.ReaderPage
+import eu.kanade.tachiyomi.ui.reader2.model.ViewerChapters
 import eu.kanade.tachiyomi.ui.reader2.viewer.*
 import eu.kanade.tachiyomi.util.GLUtil
+import eu.kanade.tachiyomi.util.getUriCompat
 import eu.kanade.tachiyomi.util.plusAssign
+import eu.kanade.tachiyomi.util.toast
 import eu.kanade.tachiyomi.widget.SimpleAnimationListener
 import eu.kanade.tachiyomi.widget.SimpleSeekBarListener
 import kotlinx.android.synthetic.main.reader_activity2.*
@@ -33,7 +40,9 @@ import rx.Observable
 import rx.Subscription
 import rx.android.schedulers.AndroidSchedulers
 import rx.subscriptions.CompositeSubscription
+import timber.log.Timber
 import uy.kohesive.injekt.injectLazy
+import java.io.File
 import java.util.concurrent.TimeUnit
 
 @RequiresPresenter(ReaderPresenter::class)
@@ -289,6 +298,10 @@ class ReaderActivity : BaseRxActivity<ReaderPresenter>() {
         }
     }
 
+    fun onLongTap(page: ReaderPage) {
+        ReaderPageSheet(this, page).show()
+    }
+
     fun requestPreloadNextChapter() {
         presenter.preloadNextChapter()
     }
@@ -299,6 +312,51 @@ class ReaderActivity : BaseRxActivity<ReaderPresenter>() {
 
     fun toggleMenu() {
         setMenuVisibility(!menuVisible)
+    }
+
+    /**
+     * Reader page sheet
+     */
+
+    fun shareImage(page: ReaderPage) {
+        presenter.shareImage(page)
+    }
+
+    fun onShareImageResult(file: File) {
+        val stream = file.getUriCompat(this)
+        val intent = Intent(Intent.ACTION_SEND).apply {
+            putExtra(Intent.EXTRA_STREAM, stream)
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_GRANT_READ_URI_PERMISSION
+            type = "image/*"
+        }
+        startActivity(Intent.createChooser(intent, getString(R.string.action_share)))
+    }
+
+    fun saveImage(page: ReaderPage) {
+        presenter.saveImage(page)
+    }
+
+    fun onSaveImageResult(result: ReaderPresenter.SaveImageResult) {
+        when (result) {
+            is ReaderPresenter.SaveImageResult.Success -> {
+                toast(R.string.picture_saved)
+            }
+            is ReaderPresenter.SaveImageResult.Error -> {
+                Timber.e(result.error)
+            }
+        }
+    }
+
+    fun setAsCover(page: ReaderPage) {
+        presenter.setAsCover(page)
+    }
+
+    fun onSetAsCoverResult(result: ReaderPresenter.SetAsCoverResult) {
+        toast(when (result) {
+            Success -> R.string.cover_updated
+            AddToLibraryFirst -> R.string.notification_first_add_to_library
+            Error -> R.string.notification_cover_update_failed
+        })
     }
 
     /**

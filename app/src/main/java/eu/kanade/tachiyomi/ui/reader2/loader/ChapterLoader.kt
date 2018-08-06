@@ -5,8 +5,7 @@ import eu.kanade.tachiyomi.data.download.DownloadManager
 import eu.kanade.tachiyomi.source.LocalSource
 import eu.kanade.tachiyomi.source.Source
 import eu.kanade.tachiyomi.source.online.HttpSource
-import eu.kanade.tachiyomi.ui.reader2.ReaderChapter
-import eu.kanade.tachiyomi.ui.reader2.ReaderPage
+import eu.kanade.tachiyomi.ui.reader2.model.ReaderChapter
 import rx.Completable
 import rx.Observable
 import rx.android.schedulers.AndroidSchedulers
@@ -31,8 +30,8 @@ class ChapterLoader(
                 val loader = getPageLoader(it)
                 chapter.pageLoader = loader
 
-                loader.getPages().map { pages ->
-                    pages.map { ReaderPage.from(it, chapter) }
+                loader.getPages().doOnNext { pages ->
+                    pages.forEach { it.chapter2 = chapter }
                 }
             }
             .observeOn(AndroidSchedulers.mainThread())

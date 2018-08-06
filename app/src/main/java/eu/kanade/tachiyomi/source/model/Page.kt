@@ -4,7 +4,6 @@ import android.net.Uri
 import eu.kanade.tachiyomi.network.ProgressListener
 import eu.kanade.tachiyomi.ui.reader.ReaderChapter
 import rx.subjects.Subject
-import java.io.InputStream
 
 open class Page(
         val index: Int,
@@ -12,8 +11,6 @@ open class Page(
         var imageUrl: String? = null,
         @Transient var uri: Uri? = null // Deprecated but can't be deleted due to extensions
 ) : ProgressListener {
-
-    @Transient var stream: (() -> InputStream)? = null
 
     val number: Int
         get() = index + 1

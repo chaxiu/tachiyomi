@@ -12,7 +12,7 @@ import eu.kanade.tachiyomi.R
 import eu.kanade.tachiyomi.source.model.Page
 import eu.kanade.tachiyomi.ui.base.holder.BaseViewHolder
 import eu.kanade.tachiyomi.ui.reader2.ReaderActivity
-import eu.kanade.tachiyomi.ui.reader2.ReaderPage
+import eu.kanade.tachiyomi.ui.reader2.model.ReaderPage
 import kotlinx.android.synthetic.main.reader_webtoon_item.*
 import rx.Observable
 import rx.Subscription

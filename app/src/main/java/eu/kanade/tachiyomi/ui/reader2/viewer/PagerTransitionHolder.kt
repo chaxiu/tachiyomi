@@ -12,7 +12,7 @@ import android.widget.LinearLayout
 import android.widget.ProgressBar
 import android.widget.TextView
 import eu.kanade.tachiyomi.R
-import eu.kanade.tachiyomi.ui.reader2.ReaderChapter
+import eu.kanade.tachiyomi.ui.reader2.model.ReaderChapter
 import eu.kanade.tachiyomi.util.dpToPx
 import eu.kanade.tachiyomi.widget.ViewPagerAdapter
 import rx.Subscription

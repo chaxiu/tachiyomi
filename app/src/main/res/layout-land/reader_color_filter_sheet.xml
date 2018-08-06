@@ -4,8 +4,7 @@
     android:layout_height="match_parent"
     android:orientation="horizontal"
     android:baselineAligned="false"
-    android:background="?attr/colorBackgroundFloating"
-    android:theme="?attr/alertDialogTheme">
+    android:background="?android:colorBackground">
 
     <FrameLayout
         android:layout_width="0dp"

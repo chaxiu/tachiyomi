@@ -1,4 +1,4 @@
-package eu.kanade.tachiyomi.ui.reader2
+package eu.kanade.tachiyomi.ui.reader2.model
 
 import com.jakewharton.rxrelay.BehaviorRelay
 import eu.kanade.tachiyomi.data.database.models.Chapter
@@ -8,7 +8,8 @@ import timber.log.Timber
 
 data class ReaderChapter(val chapter: Chapter) {
 
-    var state: State = State.Wait
+    var state: State =
+            State.Wait
         set(value) {
             field = value
             stateRelay.call(value)

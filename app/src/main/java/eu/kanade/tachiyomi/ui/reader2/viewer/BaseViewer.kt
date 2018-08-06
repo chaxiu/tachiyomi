@@ -2,8 +2,8 @@ package eu.kanade.tachiyomi.ui.reader2.viewer
 
 import android.view.View
 import eu.kanade.tachiyomi.ui.reader2.ReaderActivity
-import eu.kanade.tachiyomi.ui.reader2.ReaderPage
-import eu.kanade.tachiyomi.ui.reader2.ViewerChapters
+import eu.kanade.tachiyomi.ui.reader2.model.ReaderPage
+import eu.kanade.tachiyomi.ui.reader2.model.ViewerChapters
 
 abstract class BaseViewer(val activity: ReaderActivity) {
 

@@ -48,6 +48,7 @@ open class WebtoonRecyclerView @JvmOverloads constructor(
     private val detector = GestureDetector(context, listener)
 
     var tapListener: ((MotionEvent) -> Unit)? = null
+    var longTapListener: ((MotionEvent) -> Unit)? = null
 
     override fun onMeasure(widthSpec: Int, heightSpec: Int) {
         halfWidth = MeasureSpec.getSize(widthSpec) / 2
@@ -77,6 +78,10 @@ open class WebtoonRecyclerView @JvmOverloads constructor(
                     zoom(currentScale, DEFAULT_RATE, x, 0f, y, 0f)
                 }
             }
+        }
+
+        override fun onLongPress(e: MotionEvent) {
+            longTapListener?.invoke(e)
         }
 
     }

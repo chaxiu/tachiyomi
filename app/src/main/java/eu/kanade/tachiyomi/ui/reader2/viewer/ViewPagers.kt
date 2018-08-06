@@ -10,6 +10,7 @@ import android.view.View
 open class Pager(context: Context) : ViewPager(context) {
 
     var tapListener: ((MotionEvent) -> Unit)? = null
+    var longTapListener: ((MotionEvent) -> Unit)? = null
 
     private var isTapListenerEnabled = true
 
@@ -17,6 +18,10 @@ open class Pager(context: Context) : ViewPager(context) {
         override fun onSingleTapConfirmed(event: MotionEvent): Boolean {
             tapListener?.invoke(event)
             return true
+        }
+
+        override fun onLongPress(e: MotionEvent) {
+            longTapListener?.invoke(e)
         }
     }
 

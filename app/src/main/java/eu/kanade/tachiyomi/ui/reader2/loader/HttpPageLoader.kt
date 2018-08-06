@@ -3,8 +3,8 @@ package eu.kanade.tachiyomi.ui.reader2.loader
 import eu.kanade.tachiyomi.data.cache.ChapterCache
 import eu.kanade.tachiyomi.source.model.Page
 import eu.kanade.tachiyomi.source.online.HttpSource
-import eu.kanade.tachiyomi.ui.reader2.ReaderChapter
-import eu.kanade.tachiyomi.ui.reader2.ReaderPage
+import eu.kanade.tachiyomi.ui.reader2.model.ReaderChapter
+import eu.kanade.tachiyomi.ui.reader2.model.ReaderPage
 import eu.kanade.tachiyomi.util.plusAssign
 import rx.Completable
 import rx.Observable
@@ -46,10 +46,15 @@ class HttpPageLoader(
      * Returns an observable with the page list for a chapter. It tries to return the page list from
      * the local cache, otherwise fallbacks to network.
      */
-    override fun getPages(): Observable<List<Page>> {
+    override fun getPages(): Observable<List<ReaderPage>> {
         return chapterCache
             .getPageListFromCache(chapter.chapter)
             .onErrorResumeNext { source.fetchPageList(chapter.chapter) }
+            .map { pages ->
+                pages.map {
+                    ReaderPage(it.index, it.url, it.imageUrl)
+                }
+            }
     }
 
     override fun getPage(page: ReaderPage): Observable<Int> {
@@ -106,6 +111,7 @@ class HttpPageLoader(
         // Cache current page list progress for online chapters to allow a faster reopen
         val pages = chapter.pages
         if (pages != null) {
+            // TODO check compatibility with ReaderPage
             Completable.fromAction { chapterCache.putPageListToCache(chapter.chapter, pages) }
                 .onErrorComplete()
                 .subscribeOn(Schedulers.io())

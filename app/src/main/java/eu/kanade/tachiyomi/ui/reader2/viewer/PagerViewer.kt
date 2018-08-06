@@ -7,8 +7,8 @@ import android.view.ViewGroup.LayoutParams
 import eu.kanade.tachiyomi.R
 import eu.kanade.tachiyomi.ui.reader.viewer.pager.PagerReader
 import eu.kanade.tachiyomi.ui.reader2.ReaderActivity
-import eu.kanade.tachiyomi.ui.reader2.ReaderPage
-import eu.kanade.tachiyomi.ui.reader2.ViewerChapters
+import eu.kanade.tachiyomi.ui.reader2.model.ReaderPage
+import eu.kanade.tachiyomi.ui.reader2.model.ViewerChapters
 import timber.log.Timber
 
 @Suppress("LeakingThis")
@@ -66,6 +66,12 @@ abstract class PagerViewer(activity: ReaderActivity) : BaseViewer(activity) {
                 if (config.tappingEnabled) moveRight()
             } else {
                 activity.toggleMenu()
+            }
+        }
+        pager.longTapListener = { _ ->
+            val item = adapter.items.getOrNull(pager.currentItem)
+            if (item is ReaderPage) {
+                activity.onLongTap(item)
             }
         }
         config.imagePropertyChangedListener = {

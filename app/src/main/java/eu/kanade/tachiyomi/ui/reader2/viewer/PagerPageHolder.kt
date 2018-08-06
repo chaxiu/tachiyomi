@@ -17,8 +17,8 @@ import eu.kanade.tachiyomi.data.glide.GlideApp
 import eu.kanade.tachiyomi.data.glide.GlideInputStream
 import eu.kanade.tachiyomi.source.model.Page
 import eu.kanade.tachiyomi.ui.reader.viewer.pager.PagerReader
-import eu.kanade.tachiyomi.ui.reader2.ReaderPage
-import eu.kanade.tachiyomi.util.DiskUtil
+import eu.kanade.tachiyomi.ui.reader2.model.ReaderPage
+import eu.kanade.tachiyomi.util.ImageUtil
 import eu.kanade.tachiyomi.util.dpToPx
 import eu.kanade.tachiyomi.util.gone
 import eu.kanade.tachiyomi.util.visible
@@ -184,7 +184,7 @@ class PagerPageHolder(
         val streamFn = page.stream ?: return
 
         readImageHeaderSubscription = Observable
-            .fromCallable { DiskUtil.isAnimatedImage(streamFn) }
+            .fromCallable { ImageUtil.isAnimatedImage(streamFn) }
             .subscribeOn(Schedulers.io())
             .observeOn(AndroidSchedulers.mainThread())
             .subscribe({ isAnimatedImage ->

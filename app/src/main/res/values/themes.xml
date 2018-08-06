@@ -114,7 +114,6 @@
         <item name="colorPrimary">@color/colorDarkPrimary</item>
         <item name="colorPrimaryDark">@color/colorDarkPrimaryDark</item>
         <item name="android:colorBackground">@android:color/white</item>
-        <item name="actionBarTheme">@style/ThemeOverlay.AppCompat.Dark.ActionBar</item>
     </style>
 
     <style name="Theme.Reader" parent="Theme.Base.Reader.Dark">

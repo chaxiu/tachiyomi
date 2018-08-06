@@ -6,8 +6,8 @@ import android.view.Gravity
 import android.view.ViewGroup
 import android.widget.TextView
 import eu.kanade.tachiyomi.R
-import eu.kanade.tachiyomi.ui.reader2.ReaderPage
-import eu.kanade.tachiyomi.ui.reader2.ViewerChapters
+import eu.kanade.tachiyomi.ui.reader2.model.ReaderPage
+import eu.kanade.tachiyomi.ui.reader2.model.ViewerChapters
 import eu.kanade.tachiyomi.util.inflate
 
 class WebtoonAdapter(val viewer: WebtoonViewer) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {

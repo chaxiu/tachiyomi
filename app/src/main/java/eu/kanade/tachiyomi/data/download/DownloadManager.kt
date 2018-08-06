@@ -120,10 +120,7 @@ class DownloadManager(private val context: Context) {
 
             files.sortedBy { it.name }
                     .mapIndexed { i, file ->
-                        Page(i, uri = file.uri).apply {
-                            stream = { context.contentResolver.openInputStream(file.uri) }
-                            status = Page.READY
-                        }
+                        Page(i, uri = file.uri).apply { status = Page.READY }
                     }
         }
     }

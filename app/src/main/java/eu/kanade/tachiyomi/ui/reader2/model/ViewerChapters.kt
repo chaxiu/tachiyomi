@@ -1,4 +1,4 @@
-package eu.kanade.tachiyomi.ui.reader2
+package eu.kanade.tachiyomi.ui.reader2.model
 
 data class ViewerChapters(
         val currChapter: ReaderChapter,

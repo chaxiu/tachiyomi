@@ -3,8 +3,8 @@ package eu.kanade.tachiyomi.ui.reader2.viewer
 import android.support.v4.view.PagerAdapter
 import android.view.View
 import android.view.ViewGroup
-import eu.kanade.tachiyomi.ui.reader2.ReaderPage
-import eu.kanade.tachiyomi.ui.reader2.ViewerChapters
+import eu.kanade.tachiyomi.ui.reader2.model.ReaderPage
+import eu.kanade.tachiyomi.ui.reader2.model.ViewerChapters
 import eu.kanade.tachiyomi.widget.ViewPagerAdapter
 import timber.log.Timber
 

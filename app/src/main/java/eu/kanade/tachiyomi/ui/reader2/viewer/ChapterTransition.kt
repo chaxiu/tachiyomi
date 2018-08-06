@@ -1,6 +1,6 @@
 package eu.kanade.tachiyomi.ui.reader2.viewer
 
-import eu.kanade.tachiyomi.ui.reader2.ReaderChapter
+import eu.kanade.tachiyomi.ui.reader2.model.ReaderChapter
 
 sealed class ChapterTransition {
 

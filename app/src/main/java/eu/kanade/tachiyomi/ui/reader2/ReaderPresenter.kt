@@ -1,15 +1,27 @@
 package eu.kanade.tachiyomi.ui.reader2
 
+import android.app.Application
 import android.os.Bundle
+import android.os.Environment
 import com.jakewharton.rxrelay.BehaviorRelay
+import eu.kanade.tachiyomi.R
+import eu.kanade.tachiyomi.data.cache.CoverCache
 import eu.kanade.tachiyomi.data.database.DatabaseHelper
 import eu.kanade.tachiyomi.data.database.models.Chapter
 import eu.kanade.tachiyomi.data.database.models.Manga
 import eu.kanade.tachiyomi.data.download.DownloadManager
 import eu.kanade.tachiyomi.data.preference.PreferencesHelper
+import eu.kanade.tachiyomi.source.LocalSource
 import eu.kanade.tachiyomi.source.SourceManager
+import eu.kanade.tachiyomi.source.model.Page
 import eu.kanade.tachiyomi.ui.base.presenter.BasePresenter
+import eu.kanade.tachiyomi.ui.reader.SaveImageNotifier
 import eu.kanade.tachiyomi.ui.reader2.loader.ChapterLoader
+import eu.kanade.tachiyomi.ui.reader2.model.ReaderChapter
+import eu.kanade.tachiyomi.ui.reader2.model.ReaderPage
+import eu.kanade.tachiyomi.ui.reader2.model.ViewerChapters
+import eu.kanade.tachiyomi.util.DiskUtil
+import eu.kanade.tachiyomi.util.ImageUtil
 import rx.Completable
 import rx.Observable
 import rx.Subscription
@@ -18,12 +30,14 @@ import rx.schedulers.Schedulers
 import timber.log.Timber
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
+import java.io.File
 import java.util.concurrent.TimeUnit
 
 class ReaderPresenter(
         private val db: DatabaseHelper = Injekt.get(),
         private val sourceManager: SourceManager = Injekt.get(),
         private val downloadManager: DownloadManager = Injekt.get(),
+        private val coverCache: CoverCache = Injekt.get(),
         val preferences: PreferencesHelper = Injekt.get()
 ) : BasePresenter<ReaderActivity>() {
 
@@ -254,6 +268,111 @@ class ReaderPresenter(
                     view.setChapters(currChapters)
                 }
             })
+    }
+
+    private fun saveImage(page: ReaderPage, directory: File, manga: Manga): File {
+        val stream = page.stream!!
+        val type = ImageUtil.findImageType(stream) ?: throw Exception("Not an image")
+
+        directory.mkdirs()
+
+        val chapter = page.chapter2.chapter
+
+        // Build destination file.
+        val filename = DiskUtil.buildValidFilename(
+                "${manga.title} - ${chapter.name}") + " - ${page.number}.${type.extension}"
+
+        val destFile = File(directory, filename)
+        stream().use { input ->
+            destFile.outputStream().use { output ->
+                input.copyTo(output)
+            }
+        }
+        return destFile
+    }
+
+    fun saveImage(page: ReaderPage) {
+        if (page.status != Page.READY) return
+        val manga = manga ?: return
+        val context = Injekt.get<Application>()
+
+        val notifier = SaveImageNotifier(context)
+        notifier.onClear()
+
+        // Pictures directory.
+        val destDir = File(Environment.getExternalStorageDirectory().absolutePath +
+                           File.separator + Environment.DIRECTORY_PICTURES +
+                           File.separator + "Tachiyomi")
+
+        // Copy file in background.
+        Observable.fromCallable { saveImage(page, destDir, manga) }
+            .doOnNext { file ->
+                DiskUtil.scanMedia(context, file)
+                notifier.onComplete(file)
+            }
+            .doOnError { notifier.onError(it.message) }
+            .subscribeOn(Schedulers.io())
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribeFirst(
+                    { view, file -> view.onSaveImageResult(SaveImageResult.Success(file)) },
+                    { view, error -> view.onSaveImageResult(SaveImageResult.Error(error)) }
+            )
+    }
+
+    fun shareImage(page: ReaderPage) {
+        if (page.status != Page.READY) return
+        val manga = manga ?: return
+        val context = Injekt.get<Application>()
+
+        val destDir = File(context.cacheDir, "shared_image")
+
+        Observable.fromCallable { destDir.delete() } // Keep only the last shared file
+            .map { saveImage(page, destDir, manga) }
+            .subscribeOn(Schedulers.io())
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribeFirst(
+                    { view, file -> view.onShareImageResult(file) },
+                    { view, error -> /* Empty */ }
+            )
+    }
+
+    fun setAsCover(page: ReaderPage) {
+        if (page.status != Page.READY) return
+        val manga = manga ?: return
+        val stream = page.stream ?: return
+
+        Observable
+            .fromCallable {
+                if (manga.source == LocalSource.ID) {
+                    val context = Injekt.get<Application>()
+                    LocalSource.updateCover(context, manga, stream())
+                    R.string.cover_updated
+                    SetAsCoverResult.Success
+                } else {
+                    val thumbUrl = manga.thumbnail_url ?: throw Exception("Image url not found")
+                    if (manga.favorite) {
+                        coverCache.copyToCache(thumbUrl, stream())
+                        SetAsCoverResult.Success
+                    } else {
+                        SetAsCoverResult.AddToLibraryFirst
+                    }
+                }
+            }
+            .subscribeOn(Schedulers.io())
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribeFirst(
+                    { view, result -> view.onSetAsCoverResult(result) },
+                    { view, _ -> view.onSetAsCoverResult(SetAsCoverResult.Error) }
+            )
+    }
+
+    enum class SetAsCoverResult {
+        Success, AddToLibraryFirst, Error
+    }
+
+    sealed class SaveImageResult {
+        class Success(val file: File) : SaveImageResult()
+        class Error(val error: Throwable) : SaveImageResult()
     }
 
 }

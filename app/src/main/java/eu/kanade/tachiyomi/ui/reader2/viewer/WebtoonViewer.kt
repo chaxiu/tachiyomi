@@ -9,8 +9,8 @@ import android.view.View
 import android.view.ViewGroup
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import eu.kanade.tachiyomi.ui.reader2.ReaderActivity
-import eu.kanade.tachiyomi.ui.reader2.ReaderPage
-import eu.kanade.tachiyomi.ui.reader2.ViewerChapters
+import eu.kanade.tachiyomi.ui.reader2.model.ReaderPage
+import eu.kanade.tachiyomi.ui.reader2.model.ViewerChapters
 import rx.subscriptions.CompositeSubscription
 import timber.log.Timber
 
@@ -82,6 +82,14 @@ class WebtoonViewer(activity: ReaderActivity) : BaseViewer(activity) {
                 else -> activity.toggleMenu()
             }
         }
+        recycler.longTapListener = { event ->
+            val child = recycler.findChildViewUnder(event.x, event.y)
+            val position = recycler.getChildAdapterPosition(child)
+            val item = adapter.items.getOrNull(position)
+            if (item is ReaderPage) {
+                activity.onLongTap(item)
+            }
+        }
 
         frame.layoutParams = ViewGroup.LayoutParams(MATCH_PARENT, MATCH_PARENT)
         frame.addView(recycler)
@@ -150,7 +158,7 @@ class WebtoonViewer(activity: ReaderActivity) : BaseViewer(activity) {
     }
 
     override fun moveDown() {
-        moveDown()
+        moveRight()
     }
 
     override fun moveToNextChapter() {
