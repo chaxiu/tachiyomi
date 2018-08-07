@@ -2,10 +2,11 @@ package eu.kanade.tachiyomi.ui.reader2.viewer.pager
 
 import android.content.Context
 import android.support.v4.view.ViewPager
-import android.view.GestureDetector
+import android.view.HapticFeedbackConstants
 import android.view.KeyEvent
 import android.view.MotionEvent
 import android.view.View
+import eu.kanade.tachiyomi.ui.reader2.viewer.LongTapGestureDetector
 
 open class Pager(context: Context) : ViewPager(context) {
 
@@ -14,18 +15,24 @@ open class Pager(context: Context) : ViewPager(context) {
 
     private var isTapListenerEnabled = true
 
-    private val gestureListener = object : GestureDetector.SimpleOnGestureListener() {
-        override fun onSingleTapConfirmed(event: MotionEvent): Boolean {
-            tapListener?.invoke(event)
+    private val gestureListener = object : LongTapGestureDetector.Listener() {
+
+        override fun onSingleTapConfirmed(ev: MotionEvent): Boolean {
+            tapListener?.invoke(ev)
             return true
         }
 
-        override fun onLongPress(e: MotionEvent) {
-            longTapListener?.invoke(e)
+        override fun onLongTapConfirmed(ev: MotionEvent) {
+            val listener = longTapListener
+            if (listener != null) {
+                listener.invoke(ev)
+                performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
+            }
         }
+
     }
 
-    private val gestureDetector = GestureDetector(context, gestureListener)
+    private val gestureDetector = LongTapGestureDetector(context, gestureListener)
 
     override fun dispatchTouchEvent(ev: MotionEvent): Boolean {
         val handled = super.dispatchTouchEvent(ev)

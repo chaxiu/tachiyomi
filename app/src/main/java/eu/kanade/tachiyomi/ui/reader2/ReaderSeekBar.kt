@@ -1,4 +1,4 @@
-package eu.kanade.tachiyomi.widget
+package eu.kanade.tachiyomi.ui.reader2
 
 import android.content.Context
 import android.graphics.Canvas
@@ -6,7 +6,7 @@ import android.support.v7.widget.AppCompatSeekBar
 import android.util.AttributeSet
 import android.view.MotionEvent
 
-class ReverseableSeekBar @JvmOverloads constructor(
+class ReaderSeekBar @JvmOverloads constructor(
         context: Context,
         attrs: AttributeSet? = null
 ) : AppCompatSeekBar(context, attrs) {

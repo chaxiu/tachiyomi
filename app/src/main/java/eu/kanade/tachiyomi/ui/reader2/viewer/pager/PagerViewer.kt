@@ -2,16 +2,14 @@ package eu.kanade.tachiyomi.ui.reader2.viewer.pager
 
 import android.support.v4.view.ViewPager
 import android.view.KeyEvent
-import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup.LayoutParams
 import eu.kanade.tachiyomi.R
-import eu.kanade.tachiyomi.ui.reader.viewer.pager.PagerReader
 import eu.kanade.tachiyomi.ui.reader2.ReaderActivity
+import eu.kanade.tachiyomi.ui.reader2.model.ChapterTransition
 import eu.kanade.tachiyomi.ui.reader2.model.ReaderPage
 import eu.kanade.tachiyomi.ui.reader2.model.ViewerChapters
 import eu.kanade.tachiyomi.ui.reader2.viewer.BaseViewer
-import eu.kanade.tachiyomi.ui.reader2.model.ChapterTransition
 import timber.log.Timber
 
 @Suppress("LeakingThis")
@@ -63,20 +61,21 @@ abstract class PagerViewer(activity: ReaderActivity) : BaseViewer(activity) {
         pager.tapListener = { event ->
             val positionX = event.x
 
-            if (positionX < pager.width * PagerReader.LEFT_REGION) {
+            if (positionX < pager.width * 0.33f) {
                 if (config.tappingEnabled) moveLeft()
-            } else if (positionX > pager.width * PagerReader.RIGHT_REGION) {
+            } else if (positionX > pager.width * 0.66f) {
                 if (config.tappingEnabled) moveRight()
             } else {
                 activity.toggleMenu()
             }
         }
-        pager.longTapListener = { _ ->
+        pager.longTapListener = {
             val item = adapter.items.getOrNull(pager.currentItem)
             if (item is ReaderPage) {
                 activity.onLongTap(item)
             }
         }
+
         config.imagePropertyChangedListener = {
             refreshAdapter()
         }
@@ -227,20 +226,6 @@ abstract class PagerViewer(activity: ReaderActivity) : BaseViewer(activity) {
         val currentItem = pager.currentItem
         pager.adapter = adapter
         pager.setCurrentItem(currentItem, false)
-    }
-
-    /**
-     * Extension method to be called by buttons or other views that want to intercept the default
-     * click behavior to change pages or show the menu.
-     */
-    fun interceptPagerTapListenerOnClick(view: View) {
-        view.setOnTouchListener { _, event ->
-            pager.setTapListenerEnabled(false)
-            if (event.actionMasked == MotionEvent.ACTION_UP) {
-                pager.setTapListenerEnabled(true)
-            }
-            false
-        }
     }
 
 }

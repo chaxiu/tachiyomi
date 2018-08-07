@@ -9,12 +9,10 @@ import android.os.Build
 import android.support.v7.widget.LinearLayoutManager
 import android.support.v7.widget.RecyclerView
 import android.util.AttributeSet
-import android.view.GestureDetector
-import android.view.MotionEvent
-import android.view.ScaleGestureDetector
-import android.view.ViewConfiguration
+import android.view.*
 import android.view.animation.DecelerateInterpolator
 import android.widget.FrameLayout
+import eu.kanade.tachiyomi.ui.reader2.viewer.LongTapGestureDetector
 
 const val ANIMATOR_DURATION_TIME = 200
 const val DEFAULT_RATE = 1f
@@ -35,17 +33,8 @@ open class WebtoonRecyclerView @JvmOverloads constructor(
     private var lastVisibleItemPosition = 0
     private var currentScale = DEFAULT_RATE
 
-    private var scrollPointerId = 0
-    private var downX = 0
-    private var downY = 0
-    private val viewConfig = ViewConfiguration.get(context)
-    private val touchSlop = viewConfig.scaledTouchSlop
-    private var isZoomDragging = false
-    private var isDoubleTapping = false
-    private var isQuickScaling = false
-
     private val listener = GestureListener()
-    private val detector = GestureDetector(context, listener)
+    private val detector = Detector()
 
     var tapListener: ((MotionEvent) -> Unit)? = null
     var longTapListener: ((MotionEvent) -> Unit)? = null
@@ -56,111 +45,7 @@ open class WebtoonRecyclerView @JvmOverloads constructor(
         super.onMeasure(widthSpec, heightSpec)
     }
 
-    inner class GestureListener : GestureDetector.SimpleOnGestureListener() {
-
-        override fun onSingleTapConfirmed(e: MotionEvent): Boolean {
-            tapListener?.invoke(e)
-            return false
-        }
-
-        override fun onDoubleTap(e: MotionEvent): Boolean {
-            isDoubleTapping = true
-            return false
-        }
-
-        fun onDoubleTapConfirmed(e: MotionEvent) {
-            if (!isZooming) {
-                if (scaleX == DEFAULT_RATE) {
-                    zoom(DEFAULT_RATE,
-                            MAX_SCALE_RATE, 0f,
-                            (halfWidth - e.x) * (MAX_SCALE_RATE - 1), 0f,
-                            (halfHeight - e.y) * (MAX_SCALE_RATE - 1))
-                } else {
-                    zoom(currentScale, DEFAULT_RATE, x, 0f, y, 0f)
-                }
-            }
-        }
-
-        override fun onLongPress(e: MotionEvent) {
-            longTapListener?.invoke(e)
-        }
-
-    }
-
     override fun onTouchEvent(e: MotionEvent): Boolean {
-        val action = e.actionMasked
-        val actionIndex = e.actionIndex
-
-        when (action) {
-            MotionEvent.ACTION_DOWN -> {
-                scrollPointerId = e.getPointerId(0)
-                downX = (e.x + 0.5f).toInt()
-                downY = (e.y + 0.5f).toInt()
-            }
-            MotionEvent.ACTION_POINTER_DOWN -> {
-                scrollPointerId = e.getPointerId(actionIndex)
-                downX = (e.getX(actionIndex) + 0.5f).toInt()
-                downY = (e.getY(actionIndex) + 0.5f).toInt()
-            }
-            MotionEvent.ACTION_MOVE -> {
-                if (isDoubleTapping && isQuickScaling) {
-                    return true
-                }
-
-                val index = e.findPointerIndex(scrollPointerId)
-                if (index < 0) {
-                    return false
-                }
-
-                val x = (e.getX(index) + 0.5f).toInt()
-                val y = (e.getY(index) + 0.5f).toInt()
-                var dx = x - downX
-                var dy = if (atFirstPosition || atLastPosition) y - downY else 0
-
-                if (!isZoomDragging && currentScale > 1f) {
-                    var startScroll = false
-
-                    if (Math.abs(dx) > touchSlop) {
-                        if (dx < 0) {
-                            dx += touchSlop
-                        } else {
-                            dx -= touchSlop
-                        }
-                        startScroll = true
-                    }
-                    if (Math.abs(dy) > touchSlop) {
-                        if (dy < 0) {
-                            dy += touchSlop
-                        } else {
-                            dy -= touchSlop
-                        }
-                        startScroll = true
-                    }
-
-                    if (startScroll) {
-                        isZoomDragging = true
-                    }
-                }
-
-                if (isZoomDragging) {
-                    zoomScrollBy(dx, dy)
-                }
-            }
-            MotionEvent.ACTION_UP -> {
-                if (isDoubleTapping && !isQuickScaling) {
-                    listener.onDoubleTapConfirmed(e)
-                }
-                isZoomDragging = false
-                isDoubleTapping = false
-                isQuickScaling = false
-            }
-            MotionEvent.ACTION_CANCEL -> {
-                isZoomDragging = false
-                isDoubleTapping = false
-                isQuickScaling = false
-            }
-        }
-
         detector.onTouchEvent(e)
         return super.onTouchEvent(e)
     }
@@ -293,8 +178,8 @@ open class WebtoonRecyclerView @JvmOverloads constructor(
     }
 
     fun onScaleBegin() {
-        if (isDoubleTapping) {
-            isQuickScaling = true
+        if (detector.isDoubleTapping) {
+            detector.isQuickScaling = true
         }
     }
 
@@ -302,6 +187,129 @@ open class WebtoonRecyclerView @JvmOverloads constructor(
         if (scaleX < DEFAULT_RATE) {
             zoom(scale, DEFAULT_RATE, x, 0f, y, 0f)
         }
+    }
+
+    inner class GestureListener : LongTapGestureDetector.Listener() {
+
+        override fun onSingleTapConfirmed(ev: MotionEvent): Boolean {
+            tapListener?.invoke(ev)
+            return false
+        }
+
+        override fun onDoubleTap(ev: MotionEvent): Boolean {
+            detector.isDoubleTapping = true
+            return false
+        }
+
+        fun onDoubleTapConfirmed(ev: MotionEvent) {
+            if (!isZooming) {
+                if (scaleX == DEFAULT_RATE) {
+                    zoom(DEFAULT_RATE,
+                            MAX_SCALE_RATE, 0f,
+                            (halfWidth - ev.x) * (MAX_SCALE_RATE - 1), 0f,
+                            (halfHeight - ev.y) * (MAX_SCALE_RATE - 1))
+                } else {
+                    zoom(currentScale, DEFAULT_RATE, x, 0f, y, 0f)
+                }
+            }
+        }
+
+        override fun onLongTapConfirmed(ev: MotionEvent) {
+            val listener = longTapListener
+            if (listener != null) {
+                listener.invoke(ev)
+                performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
+            }
+        }
+
+    }
+
+    inner class Detector : LongTapGestureDetector(context, listener) {
+
+        private var scrollPointerId = 0
+        private var downX = 0
+        private var downY = 0
+        private val touchSlop = ViewConfiguration.get(context).scaledTouchSlop
+        private var isZoomDragging = false
+        var isDoubleTapping = false
+        var isQuickScaling = false
+
+        override fun onTouchEvent(ev: MotionEvent): Boolean {
+            val action = ev.actionMasked
+            val actionIndex = ev.actionIndex
+
+            when (action) {
+                MotionEvent.ACTION_DOWN -> {
+                    scrollPointerId = ev.getPointerId(0)
+                    downX = (ev.x + 0.5f).toInt()
+                    downY = (ev.y + 0.5f).toInt()
+                }
+                MotionEvent.ACTION_POINTER_DOWN -> {
+                    scrollPointerId = ev.getPointerId(actionIndex)
+                    downX = (ev.getX(actionIndex) + 0.5f).toInt()
+                    downY = (ev.getY(actionIndex) + 0.5f).toInt()
+                }
+                MotionEvent.ACTION_MOVE -> {
+                    if (isDoubleTapping && isQuickScaling) {
+                        return true
+                    }
+
+                    val index = ev.findPointerIndex(scrollPointerId)
+                    if (index < 0) {
+                        return false
+                    }
+
+                    val x = (ev.getX(index) + 0.5f).toInt()
+                    val y = (ev.getY(index) + 0.5f).toInt()
+                    var dx = x - downX
+                    var dy = if (atFirstPosition || atLastPosition) y - downY else 0
+
+                    if (!isZoomDragging && currentScale > 1f) {
+                        var startScroll = false
+
+                        if (Math.abs(dx) > touchSlop) {
+                            if (dx < 0) {
+                                dx += touchSlop
+                            } else {
+                                dx -= touchSlop
+                            }
+                            startScroll = true
+                        }
+                        if (Math.abs(dy) > touchSlop) {
+                            if (dy < 0) {
+                                dy += touchSlop
+                            } else {
+                                dy -= touchSlop
+                            }
+                            startScroll = true
+                        }
+
+                        if (startScroll) {
+                            isZoomDragging = true
+                        }
+                    }
+
+                    if (isZoomDragging) {
+                        zoomScrollBy(dx, dy)
+                    }
+                }
+                MotionEvent.ACTION_UP -> {
+                    if (isDoubleTapping && !isQuickScaling) {
+                        listener.onDoubleTapConfirmed(ev)
+                    }
+                    isZoomDragging = false
+                    isDoubleTapping = false
+                    isQuickScaling = false
+                }
+                MotionEvent.ACTION_CANCEL -> {
+                    isZoomDragging = false
+                    isDoubleTapping = false
+                    isQuickScaling = false
+                }
+            }
+            return super.onTouchEvent(ev)
+        }
+
     }
 
 }

@@ -1,7 +1,6 @@
 package eu.kanade.tachiyomi.ui.reader2.viewer.pager
 
 import android.annotation.SuppressLint
-import android.support.v7.widget.AppCompatButton
 import android.support.v7.widget.AppCompatTextView
 import android.view.Gravity
 import android.view.View
@@ -12,8 +11,8 @@ import android.widget.LinearLayout
 import android.widget.ProgressBar
 import android.widget.TextView
 import eu.kanade.tachiyomi.R
-import eu.kanade.tachiyomi.ui.reader2.model.ReaderChapter
 import eu.kanade.tachiyomi.ui.reader2.model.ChapterTransition
+import eu.kanade.tachiyomi.ui.reader2.model.ReaderChapter
 import eu.kanade.tachiyomi.util.dpToPx
 import eu.kanade.tachiyomi.widget.ViewPagerAdapter
 import rx.Subscription
@@ -121,7 +120,7 @@ class PagerTransitionHolder(
             text = "Failed to load pages: ${error.message}"
         }
 
-        val retryBtn = AppCompatButton(context).apply {
+        val retryBtn = PagerButton(context, viewer).apply {
             wrapContent()
             setText(R.string.action_retry)
             setOnClickListener {
@@ -131,7 +130,6 @@ class PagerTransitionHolder(
                     viewer.activity.requestPreloadPreviousChapter()
                 }
             }
-            viewer.interceptPagerTapListenerOnClick(this)
         }
 
         pagesContainer.addView(textView)

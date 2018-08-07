@@ -1,13 +1,19 @@
 package eu.kanade.tachiyomi.ui.reader2.viewer.pager
 
 import android.annotation.SuppressLint
+import android.content.Intent
 import android.graphics.PointF
-import android.support.v7.widget.AppCompatButton
+import android.net.Uri
+import android.view.GestureDetector
 import android.view.Gravity
+import android.view.MotionEvent
+import android.view.ViewGroup
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
 import android.widget.FrameLayout
 import android.widget.ImageView
+import android.widget.LinearLayout
+import android.widget.TextView
 import com.bumptech.glide.load.engine.DiskCacheStrategy
 import com.davemorrissey.labs.subscaleview.ImageSource
 import com.davemorrissey.labs.subscaleview.SubsamplingScaleImageView
@@ -30,6 +36,7 @@ import rx.android.schedulers.AndroidSchedulers
 import rx.schedulers.Schedulers
 import java.util.concurrent.TimeUnit
 
+
 @SuppressLint("ViewConstructor")
 class PagerPageHolder(
         val viewer: PagerViewer,
@@ -43,9 +50,11 @@ class PagerPageHolder(
 
     private var subsamplingImageView: SubsamplingScaleImageView? = null
 
-    private var imageView: PhotoView? = null
+    private var imageView: ImageView? = null
 
-    private var retryButton: AppCompatButton? = null
+    private var retryButton: PagerButton? = null
+
+    private var decodeErrorLayout: ViewGroup? = null
 
     /**
      * Subscription for status changes of the page.
@@ -63,7 +72,6 @@ class PagerPageHolder(
         addView(progressBar)
         observeStatus()
     }
-
 
     @SuppressLint("ClickableViewAccessibility")
     override fun onDetachedFromWindow() {
@@ -130,7 +138,6 @@ class PagerPageHolder(
      * Unsubscribes from the status subscription.
      */
     private fun unsubscribeStatus() {
-        page.setStatusSubject(null)
         statusSubscription?.unsubscribe()
         statusSubscription = null
     }
@@ -154,10 +161,7 @@ class PagerPageHolder(
     private fun setQueued() {
         progressBar.visible()
         retryButton?.gone()
-//        decodeErrorLayout?.let {
-//            removeView(it)
-//            decodeErrorLayout = null
-//        }
+        decodeErrorLayout?.gone()
     }
 
     /**
@@ -165,6 +169,8 @@ class PagerPageHolder(
      */
     private fun setLoading() {
         progressBar.visible()
+        retryButton?.gone()
+        decodeErrorLayout?.gone()
     }
 
     /**
@@ -172,6 +178,8 @@ class PagerPageHolder(
      */
     private fun setDownloading() {
         progressBar.visible()
+        retryButton?.gone()
+        decodeErrorLayout?.gone()
     }
 
     /**
@@ -180,6 +188,8 @@ class PagerPageHolder(
     private fun setImage() {
         progressBar.visible()
         progressBar.completeAndFadeOut()
+        retryButton?.gone()
+        decodeErrorLayout?.gone()
 
         unsubscribeReadImageHeader()
         val streamFn = page.stream ?: return
@@ -207,9 +217,7 @@ class PagerPageHolder(
      */
     private fun setError() {
         progressBar.gone()
-
-        initRetryButton()
-        retryButton?.visible()
+        initRetryButton().visible()
     }
 
     /**
@@ -217,14 +225,6 @@ class PagerPageHolder(
      */
     private fun onImageDecoded() {
         progressBar.gone()
-
-        subsamplingImageView?.run {
-            when (viewer.config.imageZoomType) {
-                PagerReader.ALIGN_LEFT -> setScaleAndCenter(scale, PointF(0f, 0f))
-                PagerReader.ALIGN_RIGHT -> setScaleAndCenter(scale, PointF(sWidth.toFloat(), 0f))
-                PagerReader.ALIGN_CENTER -> setScaleAndCenter(scale, center.apply { y = 0f })
-            }
-        }
     }
 
     /**
@@ -232,19 +232,26 @@ class PagerPageHolder(
      */
     private fun onImageDecodeError() {
         progressBar.gone()
-
-//        if (decodeErrorLayout != null) return
-//
-//        val activity = reader.activity
-//
-//        val layout = inflate(R.layout.reader_page_decode_error)
-//        PageDecodeErrorLayout(layout, page, activity.readerTheme, {
-//            activity.presenter.retryPage(page)
-//        })
-//        decodeErrorLayout = layout
-//        addView(layout)
+        initDecodeErrorLayout().visible()
     }
 
+    /**
+     * Creates a new progress bar.
+     */
+    @SuppressLint("PrivateResource")
+    private fun createProgressBar(): ReaderProgressBar {
+        return ReaderProgressBar(context, null).apply {
+
+            val size = 48.dpToPx
+            layoutParams = FrameLayout.LayoutParams(size, size).apply {
+                gravity = Gravity.CENTER
+            }
+        }
+    }
+
+    /**
+     * Initializes a subsampling scale view.
+     */
     private fun initSubsamplingImageView(): SubsamplingScaleImageView {
         if (subsamplingImageView != null) return subsamplingImageView!!
 
@@ -264,6 +271,11 @@ class PagerPageHolder(
             setCropBorders(config.imageCropBorders)
             setOnImageEventListener(object : SubsamplingScaleImageView.DefaultOnImageEventListener() {
                 override fun onReady() {
+                    when (config.imageZoomType) {
+                        PagerReader.ALIGN_LEFT -> setScaleAndCenter(scale, PointF(0f, 0f))
+                        PagerReader.ALIGN_RIGHT -> setScaleAndCenter(scale, PointF(sWidth.toFloat(), 0f))
+                        PagerReader.ALIGN_CENTER -> setScaleAndCenter(scale, center.apply { y = 0f })
+                    }
                     onImageDecoded()
                 }
 
@@ -276,47 +288,106 @@ class PagerPageHolder(
         return subsamplingImageView!!
     }
 
+    /**
+     * Initializes an image view, used for GIFs.
+     */
     private fun initImageView(): ImageView {
         if (imageView != null) return imageView!!
 
-        val config = viewer.config
-
-        imageView = PhotoView(context).apply {
+        imageView = PhotoView(context, null).apply {
             layoutParams = FrameLayout.LayoutParams(MATCH_PARENT, MATCH_PARENT)
             adjustViewBounds = true
-            setZoomTransitionDuration(config.doubleTapAnimDuration)
-            minimumScale = 1f
+            setZoomTransitionDuration(viewer.config.doubleTapAnimDuration)
+            setScaleLevels(1f, 2f, 3f)
+            // Force 2 scale levels on double tap
+            setOnDoubleTapListener(object : GestureDetector.SimpleOnGestureListener() {
+                override fun onDoubleTap(e: MotionEvent): Boolean {
+                    if (scale > 1f) {
+                        setScale(1f, e.x, e.y, true)
+                    } else {
+                        setScale(2f, e.x, e.y, true)
+                    }
+                    return true
+                }
+            })
         }
         addView(imageView)
         return imageView!!
     }
 
-    private fun initRetryButton(): AppCompatButton {
+    /**
+     * Initializes a button to retry pages.
+     */
+    private fun initRetryButton(): PagerButton {
         if (retryButton != null) return retryButton!!
 
-        retryButton = AppCompatButton(context).apply {
+        retryButton = PagerButton(context, viewer).apply {
             layoutParams = FrameLayout.LayoutParams(WRAP_CONTENT, WRAP_CONTENT).apply {
                 gravity = Gravity.CENTER
             }
+            setText(R.string.action_retry)
             setOnClickListener {
                 page.chapter2.pageLoader?.retryPage(page)
             }
-            viewer.interceptPagerTapListenerOnClick(this)
-            setText(R.string.action_retry)
         }
         addView(retryButton)
         return retryButton!!
     }
 
-    @SuppressLint("PrivateResource")
-    private fun createProgressBar(): ReaderProgressBar {
-        return ReaderProgressBar(context, null).apply {
+    /**
+     * Initializes a decode error layout.
+     */
+    private fun initDecodeErrorLayout(): ViewGroup {
+        if (decodeErrorLayout != null) return decodeErrorLayout!!
 
-            val size = 48.dpToPx
-            layoutParams = FrameLayout.LayoutParams(size, size).apply {
-                gravity = Gravity.CENTER
+        val margins = 8.dpToPx
+
+        val decodeLayout = LinearLayout(context).apply {
+            gravity = Gravity.CENTER
+            orientation = LinearLayout.VERTICAL
+        }
+        decodeErrorLayout = decodeLayout
+
+        TextView(context).apply {
+            layoutParams = LinearLayout.LayoutParams(WRAP_CONTENT, WRAP_CONTENT).apply {
+                setMargins(margins, margins, margins, margins)
+            }
+            gravity = Gravity.CENTER
+            setText(R.string.decode_image_error)
+
+            decodeLayout.addView(this)
+        }
+
+        PagerButton(context, viewer).apply {
+            layoutParams = FrameLayout.LayoutParams(WRAP_CONTENT, WRAP_CONTENT).apply {
+                setMargins(margins, margins, margins, margins)
+            }
+            setText(R.string.action_retry)
+            setOnClickListener {
+                page.chapter2.pageLoader?.retryPage(page)
+            }
+
+            decodeLayout.addView(this)
+        }
+
+        val imageUrl = page.imageUrl
+        if (imageUrl.orEmpty().startsWith("http")) {
+            PagerButton(context, viewer).apply {
+                layoutParams = FrameLayout.LayoutParams(WRAP_CONTENT, WRAP_CONTENT).apply {
+                    setMargins(margins, margins, margins, margins)
+                }
+                setText(R.string.action_open_in_browser)
+                setOnClickListener {
+                    val intent = Intent(Intent.ACTION_VIEW, Uri.parse(imageUrl))
+                    context.startActivity(intent)
+                }
+
+                decodeLayout.addView(this)
             }
         }
+
+        addView(decodeLayout)
+        return decodeLayout
     }
 
 }

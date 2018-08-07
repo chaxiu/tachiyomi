@@ -78,7 +78,7 @@
                 android:clickable="true"
                 tools:text="1"/>
 
-            <eu.kanade.tachiyomi.widget.ReverseableSeekBar
+            <eu.kanade.tachiyomi.ui.reader2.ReaderSeekBar
                 android:id="@+id/page_seekbar"
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
