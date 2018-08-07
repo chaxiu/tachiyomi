@@ -1,4 +1,4 @@
-package eu.kanade.tachiyomi.ui.reader2.viewer
+package eu.kanade.tachiyomi.ui.reader2.viewer.webtoon
 
 import android.support.v7.util.DiffUtil
 import android.support.v7.widget.RecyclerView
@@ -8,6 +8,7 @@ import android.widget.TextView
 import eu.kanade.tachiyomi.R
 import eu.kanade.tachiyomi.ui.reader2.model.ReaderPage
 import eu.kanade.tachiyomi.ui.reader2.model.ViewerChapters
+import eu.kanade.tachiyomi.ui.reader2.model.ChapterTransition
 import eu.kanade.tachiyomi.util.inflate
 
 class WebtoonAdapter(val viewer: WebtoonViewer) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
@@ -26,14 +27,18 @@ class WebtoonAdapter(val viewer: WebtoonViewer) : RecyclerView.Adapter<RecyclerV
                 newItems.addAll(prevPages.takeLast(2))
             }
         }
-        newItems.add(ChapterTransition.Prev(chapters.currChapter, chapters.prevChapter))
+        newItems.add(
+                ChapterTransition.Prev(chapters.currChapter,
+                        chapters.prevChapter))
 
         val currPages = chapters.currChapter.pages
         if (currPages != null) {
             newItems.addAll(currPages)
         }
 
-        newItems.add(ChapterTransition.Next(chapters.currChapter, chapters.nextChapter))
+        newItems.add(
+                ChapterTransition.Next(chapters.currChapter,
+                        chapters.nextChapter))
         if (chapters.nextChapter != null) {
             // Add at most two pages, because this chapter will be selected before the user can
             // swap more pages.
@@ -43,7 +48,9 @@ class WebtoonAdapter(val viewer: WebtoonViewer) : RecyclerView.Adapter<RecyclerV
             }
         }
 
-        val result = DiffUtil.calculateDiff(Callback(items, newItems))
+        val result = DiffUtil.calculateDiff(
+                Callback(items,
+                        newItems))
         items = newItems
         result.dispatchUpdatesTo(this)
     }

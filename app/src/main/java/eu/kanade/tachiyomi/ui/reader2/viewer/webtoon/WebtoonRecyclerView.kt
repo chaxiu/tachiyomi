@@ -1,4 +1,4 @@
-package eu.kanade.tachiyomi.ui.reader2.viewer
+package eu.kanade.tachiyomi.ui.reader2.viewer.webtoon
 
 import android.animation.Animator
 import android.animation.AnimatorSet
@@ -71,7 +71,8 @@ open class WebtoonRecyclerView @JvmOverloads constructor(
         fun onDoubleTapConfirmed(e: MotionEvent) {
             if (!isZooming) {
                 if (scaleX == DEFAULT_RATE) {
-                    zoom(DEFAULT_RATE, MAX_SCALE_RATE, 0f,
+                    zoom(DEFAULT_RATE,
+                            MAX_SCALE_RATE, 0f,
                             (halfWidth - e.x) * (MAX_SCALE_RATE - 1), 0f,
                             (halfHeight - e.y) * (MAX_SCALE_RATE - 1))
                 } else {
@@ -333,7 +334,9 @@ class WebtoonFrame(context: Context) : FrameLayout(context) {
             val scaleFactor = detector.scaleFactor
 
             currentScale *= scaleFactor
-            currentScale = currentScale.coerceIn(DEFAULT_RATE, MAX_SCALE_RATE)
+            currentScale = currentScale.coerceIn(
+                    DEFAULT_RATE,
+                    MAX_SCALE_RATE)
 
             recycler?.onScale(currentScale)
 

@@ -1,10 +1,11 @@
-package eu.kanade.tachiyomi.ui.reader2.viewer
+package eu.kanade.tachiyomi.ui.reader2.viewer.pager
 
 import android.support.v4.view.PagerAdapter
 import android.view.View
 import android.view.ViewGroup
 import eu.kanade.tachiyomi.ui.reader2.model.ReaderPage
 import eu.kanade.tachiyomi.ui.reader2.model.ViewerChapters
+import eu.kanade.tachiyomi.ui.reader2.model.ChapterTransition
 import eu.kanade.tachiyomi.widget.ViewPagerAdapter
 import timber.log.Timber
 
@@ -24,14 +25,18 @@ class PagerViewerAdapter(private val viewer: PagerViewer) : ViewPagerAdapter() {
                 newItems.addAll(prevPages.takeLast(2))
             }
         }
-        newItems.add(ChapterTransition.Prev(chapters.currChapter, chapters.prevChapter))
+        newItems.add(
+                ChapterTransition.Prev(chapters.currChapter,
+                        chapters.prevChapter))
 
         val currPages = chapters.currChapter.pages
         if (currPages != null) {
             newItems.addAll(currPages)
         }
 
-        newItems.add(ChapterTransition.Next(chapters.currChapter, chapters.nextChapter))
+        newItems.add(
+                ChapterTransition.Next(chapters.currChapter,
+                        chapters.nextChapter))
         if (chapters.nextChapter != null) {
             // Add at most two pages, because this chapter will be selected before the user can
             // swap more pages.
@@ -56,8 +61,10 @@ class PagerViewerAdapter(private val viewer: PagerViewer) : ViewPagerAdapter() {
     override fun createView(container: ViewGroup, position: Int): View {
         val item = items[position]
         return when (item) {
-            is ReaderPage -> PagerPageHolder(viewer, item)
-            is ChapterTransition -> PagerTransitionHolder(viewer, item)
+            is ReaderPage -> PagerPageHolder(viewer,
+                    item)
+            is ChapterTransition -> PagerTransitionHolder(
+                    viewer, item)
             else -> error("Oops")
         }
     }

@@ -1,4 +1,4 @@
-package eu.kanade.tachiyomi.ui.reader2.viewer
+package eu.kanade.tachiyomi.ui.reader2.viewer.webtoon
 
 import android.os.Build
 import android.support.v7.widget.RecyclerView
@@ -12,6 +12,9 @@ import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import eu.kanade.tachiyomi.ui.reader2.ReaderActivity
 import eu.kanade.tachiyomi.ui.reader2.model.ReaderPage
 import eu.kanade.tachiyomi.ui.reader2.model.ViewerChapters
+import eu.kanade.tachiyomi.ui.reader2.viewer.BaseViewer
+import eu.kanade.tachiyomi.ui.reader2.model.ChapterTransition
+import eu.kanade.tachiyomi.ui.reader2.viewer.pager.PagerConfig
 import rx.subscriptions.CompositeSubscription
 import timber.log.Timber
 
@@ -21,7 +24,8 @@ class WebtoonViewer(activity: ReaderActivity) : BaseViewer(activity) {
 
     private val adapter = WebtoonAdapter(this)
 
-    private val layoutManager = WebtoonLayoutManager(activity).apply {
+    private val layoutManager = WebtoonLayoutManager(
+            activity).apply {
         val screenHeight = activity.resources.displayMetrics.heightPixels
         extraLayoutSpace = screenHeight / 2
         scrollDistance = screenHeight * 3 / 4
@@ -31,7 +35,8 @@ class WebtoonViewer(activity: ReaderActivity) : BaseViewer(activity) {
 
     private val frame = WebtoonFrame(activity)
 
-    private val recycler = WebtoonRecyclerView(activity)
+    private val recycler =
+            WebtoonRecyclerView(activity)
 
     val config = PagerConfig()
 

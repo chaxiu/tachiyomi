@@ -9,8 +9,8 @@ import com.f2prateek.rx.preferences.Preference
 import eu.kanade.tachiyomi.R
 import eu.kanade.tachiyomi.data.preference.PreferencesHelper
 import eu.kanade.tachiyomi.data.preference.getOrDefault
-import eu.kanade.tachiyomi.ui.reader2.viewer.PagerViewer
-import eu.kanade.tachiyomi.ui.reader2.viewer.WebtoonViewer
+import eu.kanade.tachiyomi.ui.reader2.viewer.pager.PagerViewer
+import eu.kanade.tachiyomi.ui.reader2.viewer.webtoon.WebtoonViewer
 import eu.kanade.tachiyomi.util.visible
 import eu.kanade.tachiyomi.widget.IgnoreFirstSpinnerListener
 import kotlinx.android.synthetic.main.reader_settings_sheet.*

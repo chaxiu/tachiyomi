@@ -1,4 +1,4 @@
-package eu.kanade.tachiyomi.ui.reader2.viewer
+package eu.kanade.tachiyomi.ui.reader2.viewer.webtoon
 
 import android.view.View
 import android.view.ViewGroup

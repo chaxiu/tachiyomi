@@ -1,4 +1,4 @@
-package eu.kanade.tachiyomi.ui.reader2.viewer
+package eu.kanade.tachiyomi.ui.reader2.viewer.pager
 
 import android.support.v4.view.ViewPager
 import android.view.KeyEvent
@@ -10,6 +10,8 @@ import eu.kanade.tachiyomi.ui.reader.viewer.pager.PagerReader
 import eu.kanade.tachiyomi.ui.reader2.ReaderActivity
 import eu.kanade.tachiyomi.ui.reader2.model.ReaderPage
 import eu.kanade.tachiyomi.ui.reader2.model.ViewerChapters
+import eu.kanade.tachiyomi.ui.reader2.viewer.BaseViewer
+import eu.kanade.tachiyomi.ui.reader2.model.ChapterTransition
 import timber.log.Timber
 
 @Suppress("LeakingThis")

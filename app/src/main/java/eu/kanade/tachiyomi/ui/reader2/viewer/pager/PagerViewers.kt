@@ -1,4 +1,4 @@
-package eu.kanade.tachiyomi.ui.reader2.viewer
+package eu.kanade.tachiyomi.ui.reader2.viewer.pager
 
 import eu.kanade.tachiyomi.ui.reader2.ReaderActivity
 

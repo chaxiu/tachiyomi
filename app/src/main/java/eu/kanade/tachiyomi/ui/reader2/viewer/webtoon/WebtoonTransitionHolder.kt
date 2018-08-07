@@ -1,8 +1,9 @@
-package eu.kanade.tachiyomi.ui.reader2.viewer
+package eu.kanade.tachiyomi.ui.reader2.viewer.webtoon
 
 import android.view.View
 import android.widget.TextView
 import eu.kanade.tachiyomi.ui.base.holder.BaseViewHolder
+import eu.kanade.tachiyomi.ui.reader2.model.ChapterTransition
 import eu.kanade.tachiyomi.util.dpToPx
 
 class WebtoonTransitionHolder(val view: View) : BaseViewHolder(view) {

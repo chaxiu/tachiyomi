@@ -1,4 +1,4 @@
-package eu.kanade.tachiyomi.ui.reader2.viewer
+package eu.kanade.tachiyomi.ui.reader2.viewer.pager
 
 import com.davemorrissey.labs.subscaleview.decoder.*
 import com.f2prateek.rx.preferences.Preference
@@ -9,7 +9,7 @@ import rx.subscriptions.CompositeSubscription
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 
-class WebtoonConfig(preferences: PreferencesHelper = Injekt.get()) {
+class PagerConfig(preferences: PreferencesHelper = Injekt.get()) {
 
     private val subscriptions = CompositeSubscription()
 
@@ -22,6 +22,15 @@ class WebtoonConfig(preferences: PreferencesHelper = Injekt.get()) {
         private set
 
     var volumeKeysInverted = false
+        private set
+
+    var usePageTransitions = false
+        private set
+
+    var imageScaleType = 1
+        private set
+
+    var imageZoomType = 1
         private set
 
     var imageCropBorders = false
@@ -40,7 +49,16 @@ class WebtoonConfig(preferences: PreferencesHelper = Injekt.get()) {
         preferences.readWithTapping()
             .register({ tappingEnabled = it })
 
-        preferences.cropBordersWebtoon()
+        preferences.pageTransitions()
+            .register({ usePageTransitions = it })
+
+        preferences.imageScaleType()
+            .register({ imageScaleType = it }, { imagePropertyChangedListener?.invoke() })
+
+        preferences.zoomStart()
+            .register({ imageZoomType = it }, { imagePropertyChangedListener?.invoke() })
+
+        preferences.cropBorders()
             .register({ imageCropBorders = it }, { imagePropertyChangedListener?.invoke() })
 
         preferences.doubleTapAnimSpeed()

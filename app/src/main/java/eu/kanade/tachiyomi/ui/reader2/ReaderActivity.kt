@@ -24,6 +24,10 @@ import eu.kanade.tachiyomi.ui.reader2.ReaderPresenter.SetAsCoverResult.Success
 import eu.kanade.tachiyomi.ui.reader2.model.ReaderPage
 import eu.kanade.tachiyomi.ui.reader2.model.ViewerChapters
 import eu.kanade.tachiyomi.ui.reader2.viewer.*
+import eu.kanade.tachiyomi.ui.reader2.viewer.pager.L2RPagerViewer
+import eu.kanade.tachiyomi.ui.reader2.viewer.pager.R2LPagerViewer
+import eu.kanade.tachiyomi.ui.reader2.viewer.pager.VerticalPagerViewer
+import eu.kanade.tachiyomi.ui.reader2.viewer.webtoon.WebtoonViewer
 import eu.kanade.tachiyomi.util.GLUtil
 import eu.kanade.tachiyomi.util.getUriCompat
 import eu.kanade.tachiyomi.util.plusAssign
@@ -142,12 +146,8 @@ class ReaderActivity : BaseRxActivity<ReaderPresenter>() {
     }
 
     override fun dispatchKeyEvent(event: KeyEvent): Boolean {
-        return if (menuVisible) {
-            super.dispatchKeyEvent(event)
-        } else {
-            val handled = viewer?.handleKeyEvent(event) ?: false
-            handled || super.dispatchKeyEvent(event)
-        }
+        val handled = viewer?.handleKeyEvent(event) ?: false
+        return handled || super.dispatchKeyEvent(event)
     }
 
     private fun initializeMenu() {
@@ -163,8 +163,7 @@ class ReaderActivity : BaseRxActivity<ReaderPresenter>() {
             override fun onProgressChanged(seekBar: SeekBar, value: Int, fromUser: Boolean) {
                 val viewer = viewer
                 if (viewer != null && fromUser) {
-                    val pageIndex = if (viewer is R2LPagerViewer) seekBar.max - value else value
-                    moveToPageIndex(pageIndex)
+                    moveToPageIndex(value)
                 }
             }
         })
@@ -250,6 +249,8 @@ class ReaderActivity : BaseRxActivity<ReaderPresenter>() {
         viewer_container.addView(newViewer.getView())
 
         toolbar.title = manga.title
+
+        page_seekbar.isReversed = newViewer is R2LPagerViewer
     }
 
     fun setChapters(viewerChapters: ViewerChapters) {
@@ -298,11 +299,7 @@ class ReaderActivity : BaseRxActivity<ReaderPresenter>() {
 
         // Set seekbar progress
         page_seekbar.max = pages.lastIndex
-        page_seekbar.progress = if (viewer !is R2LPagerViewer) {
-            page.index
-        } else {
-            pages.lastIndex - page.index
-        }
+        page_seekbar.progress = page.index
     }
 
     fun onLongTap(page: ReaderPage) {

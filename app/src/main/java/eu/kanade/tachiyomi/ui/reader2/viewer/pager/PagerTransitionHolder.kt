@@ -1,4 +1,4 @@
-package eu.kanade.tachiyomi.ui.reader2.viewer
+package eu.kanade.tachiyomi.ui.reader2.viewer.pager
 
 import android.annotation.SuppressLint
 import android.support.v7.widget.AppCompatButton
@@ -13,6 +13,7 @@ import android.widget.ProgressBar
 import android.widget.TextView
 import eu.kanade.tachiyomi.R
 import eu.kanade.tachiyomi.ui.reader2.model.ReaderChapter
+import eu.kanade.tachiyomi.ui.reader2.model.ChapterTransition
 import eu.kanade.tachiyomi.util.dpToPx
 import eu.kanade.tachiyomi.widget.ViewPagerAdapter
 import rx.Subscription

@@ -1,4 +1,4 @@
-package eu.kanade.tachiyomi.ui.reader2.viewer
+package eu.kanade.tachiyomi.ui.reader2.viewer.pager
 
 import android.annotation.SuppressLint
 import android.graphics.PointF
@@ -18,6 +18,7 @@ import eu.kanade.tachiyomi.data.glide.GlideInputStream
 import eu.kanade.tachiyomi.source.model.Page
 import eu.kanade.tachiyomi.ui.reader.viewer.pager.PagerReader
 import eu.kanade.tachiyomi.ui.reader2.model.ReaderPage
+import eu.kanade.tachiyomi.ui.reader2.viewer.ReaderProgressBar
 import eu.kanade.tachiyomi.util.ImageUtil
 import eu.kanade.tachiyomi.util.dpToPx
 import eu.kanade.tachiyomi.util.gone

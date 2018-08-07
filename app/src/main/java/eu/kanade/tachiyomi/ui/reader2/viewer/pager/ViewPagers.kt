@@ -1,4 +1,4 @@
-package eu.kanade.tachiyomi.ui.reader2.viewer
+package eu.kanade.tachiyomi.ui.reader2.viewer.pager
 
 import android.content.Context
 import android.support.v4.view.ViewPager
@@ -66,7 +66,8 @@ class VerticalPager(context: Context) : Pager(context) {
 
     init {
         // The majority of the magic happens here
-        setPageTransformer(false, VerticalPageTransformer())
+        setPageTransformer(false,
+                VerticalPageTransformer())
         overScrollMode = OVER_SCROLL_NEVER
 
         val cls = ViewPager::class.java
