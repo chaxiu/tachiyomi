@@ -16,7 +16,7 @@ import eu.kanade.tachiyomi.ui.reader2.viewer.LongTapGestureDetector
 
 const val ANIMATOR_DURATION_TIME = 200
 const val DEFAULT_RATE = 1f
-const val MAX_SCALE_RATE = 2f
+const val MAX_SCALE_RATE = 3f
 
 open class WebtoonRecyclerView @JvmOverloads constructor(
         context: Context,
@@ -164,11 +164,15 @@ open class WebtoonRecyclerView @JvmOverloads constructor(
         scaleY = rate
     }
 
-    fun onScale(scale: Float) {
-        currentScale = scale
-        setScaleRate(scale)
+    fun onScale(scaleFactor: Float) {
+        currentScale *= scaleFactor
+        currentScale = currentScale.coerceIn(
+                DEFAULT_RATE,
+                MAX_SCALE_RATE)
 
-        if (scale != DEFAULT_RATE) {
+        setScaleRate(currentScale)
+
+        if (currentScale != DEFAULT_RATE) {
             x = getPositionX(x)
             y = getPositionY(y)
         } else {
@@ -183,9 +187,9 @@ open class WebtoonRecyclerView @JvmOverloads constructor(
         }
     }
 
-    fun onScaleEnd(scale: Float) {
+    fun onScaleEnd() {
         if (scaleX < DEFAULT_RATE) {
-            zoom(scale, DEFAULT_RATE, x, 0f, y, 0f)
+            zoom(currentScale, DEFAULT_RATE, x, 0f, y, 0f)
         }
     }
 
@@ -203,13 +207,13 @@ open class WebtoonRecyclerView @JvmOverloads constructor(
 
         fun onDoubleTapConfirmed(ev: MotionEvent) {
             if (!isZooming) {
-                if (scaleX == DEFAULT_RATE) {
-                    zoom(DEFAULT_RATE,
-                            MAX_SCALE_RATE, 0f,
-                            (halfWidth - ev.x) * (MAX_SCALE_RATE - 1), 0f,
-                            (halfHeight - ev.y) * (MAX_SCALE_RATE - 1))
-                } else {
+                if (scaleX != DEFAULT_RATE) {
                     zoom(currentScale, DEFAULT_RATE, x, 0f, y, 0f)
+                } else {
+                    val toScale = 2f
+                    val toX = (halfWidth - ev.x) * (toScale - 1)
+                    val toY = (halfHeight - ev.y) * (toScale - 1)
+                    zoom(DEFAULT_RATE, toScale, 0f, toX, 0f, toY)
                 }
             }
         }
@@ -330,29 +334,18 @@ class WebtoonFrame(context: Context) : FrameLayout(context) {
     }
 
     inner class ScaleListener : ScaleGestureDetector.SimpleOnScaleGestureListener() {
-
-        private var currentScale = 1f
-
         override fun onScaleBegin(detector: ScaleGestureDetector?): Boolean {
             recycler?.onScaleBegin()
             return true
         }
 
         override fun onScale(detector: ScaleGestureDetector): Boolean {
-            val scaleFactor = detector.scaleFactor
-
-            currentScale *= scaleFactor
-            currentScale = currentScale.coerceIn(
-                    DEFAULT_RATE,
-                    MAX_SCALE_RATE)
-
-            recycler?.onScale(currentScale)
-
+            recycler?.onScale(detector.scaleFactor)
             return true
         }
 
         override fun onScaleEnd(detector: ScaleGestureDetector) {
-            recycler?.onScaleEnd(currentScale)
+            recycler?.onScaleEnd()
         }
     }
 

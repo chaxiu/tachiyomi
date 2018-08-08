@@ -3,6 +3,7 @@ package eu.kanade.tachiyomi.ui.reader2.viewer.pager
 import android.annotation.SuppressLint
 import android.content.Intent
 import android.graphics.PointF
+import android.graphics.drawable.Drawable
 import android.net.Uri
 import android.view.GestureDetector
 import android.view.Gravity
@@ -14,7 +15,11 @@ import android.widget.FrameLayout
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
+import com.bumptech.glide.load.DataSource
 import com.bumptech.glide.load.engine.DiskCacheStrategy
+import com.bumptech.glide.load.engine.GlideException
+import com.bumptech.glide.request.RequestListener
+import com.bumptech.glide.request.target.Target
 import com.davemorrissey.labs.subscaleview.ImageSource
 import com.davemorrissey.labs.subscaleview.SubsamplingScaleImageView
 import com.github.chrisbanes.photoview.PhotoView
@@ -198,18 +203,13 @@ class PagerPageHolder(
             .fromCallable { ImageUtil.isAnimatedImage(streamFn) }
             .subscribeOn(Schedulers.io())
             .observeOn(AndroidSchedulers.mainThread())
-            .subscribe({ isAnimatedImage ->
+            .subscribe { isAnimatedImage ->
                 if (!isAnimatedImage) {
                     initSubsamplingImageView().setImage(ImageSource.provider(streamFn))
                 } else {
-                    val iv = initImageView()
-                    GlideApp.with(this)
-                        .load(GlideInputStream(streamFn))
-                        .skipMemoryCache(true)
-                        .diskCacheStrategy(DiskCacheStrategy.NONE)
-                        .into(iv)
+                    initImageView().setImage(GlideInputStream(streamFn))
                 }
-            })
+            }
     }
 
     /**
@@ -388,6 +388,36 @@ class PagerPageHolder(
 
         addView(decodeLayout)
         return decodeLayout
+    }
+
+    private fun ImageView.setImage(stream: GlideInputStream) {
+        GlideApp.with(this)
+            .load(stream)
+            .skipMemoryCache(true)
+            .diskCacheStrategy(DiskCacheStrategy.NONE)
+            .listener(object : RequestListener<Drawable> {
+                override fun onLoadFailed(
+                        e: GlideException?,
+                        model: Any?,
+                        target: Target<Drawable>?,
+                        isFirstResource: Boolean
+                ): Boolean {
+                    onImageDecodeError()
+                    return false
+                }
+
+                override fun onResourceReady(
+                        resource: Drawable?,
+                        model: Any?,
+                        target: Target<Drawable>?,
+                        dataSource: DataSource?,
+                        isFirstResource: Boolean
+                ): Boolean {
+                    onImageDecoded()
+                    return false
+                }
+            })
+            .into(this)
     }
 
 }

@@ -4,12 +4,11 @@ import android.support.v7.util.DiffUtil
 import android.support.v7.widget.RecyclerView
 import android.view.Gravity
 import android.view.ViewGroup
+import android.widget.FrameLayout
 import android.widget.TextView
-import eu.kanade.tachiyomi.R
+import eu.kanade.tachiyomi.ui.reader2.model.ChapterTransition
 import eu.kanade.tachiyomi.ui.reader2.model.ReaderPage
 import eu.kanade.tachiyomi.ui.reader2.model.ViewerChapters
-import eu.kanade.tachiyomi.ui.reader2.model.ChapterTransition
-import eu.kanade.tachiyomi.util.inflate
 
 class WebtoonAdapter(val viewer: WebtoonViewer) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
@@ -71,8 +70,8 @@ class WebtoonAdapter(val viewer: WebtoonViewer) : RecyclerView.Adapter<RecyclerV
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
         return when (viewType) {
             PAGE_VIEW -> {
-                val view = parent.inflate(R.layout.reader_webtoon_item2)
-                WebtoonPageHolder(view, this)
+                val view = FrameLayout(parent.context)
+                WebtoonPageHolder(view, viewer)
             }
             TRANSITION_VIEW -> {
                 val view = TextView(parent.context).apply {

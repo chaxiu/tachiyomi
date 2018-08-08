@@ -118,6 +118,11 @@ class ReaderProgressBar @JvmOverloads constructor(
                 addListener(object : AnimatorListenerAdapter() {
                     override fun onAnimationEnd(animation: Animator?) {
                         visibility = View.GONE
+                        alpha = 1f
+                    }
+
+                    override fun onAnimationCancel(animation: Animator?) {
+                        alpha = 1f
                     }
                 })
                 start()

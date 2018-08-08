@@ -1,20 +1,16 @@
 package eu.kanade.tachiyomi.ui.reader2.viewer.webtoon
 
-import android.os.Build
 import android.support.v7.widget.RecyclerView
 import android.support.v7.widget.WebtoonLayoutManager
-import android.util.DisplayMetrics
-import android.view.Display
 import android.view.KeyEvent
 import android.view.View
 import android.view.ViewGroup
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import eu.kanade.tachiyomi.ui.reader2.ReaderActivity
+import eu.kanade.tachiyomi.ui.reader2.model.ChapterTransition
 import eu.kanade.tachiyomi.ui.reader2.model.ReaderPage
 import eu.kanade.tachiyomi.ui.reader2.model.ViewerChapters
 import eu.kanade.tachiyomi.ui.reader2.viewer.BaseViewer
-import eu.kanade.tachiyomi.ui.reader2.model.ChapterTransition
-import eu.kanade.tachiyomi.ui.reader2.viewer.pager.PagerConfig
 import rx.subscriptions.CompositeSubscription
 import timber.log.Timber
 
@@ -24,8 +20,7 @@ class WebtoonViewer(activity: ReaderActivity) : BaseViewer(activity) {
 
     private val adapter = WebtoonAdapter(this)
 
-    private val layoutManager = WebtoonLayoutManager(
-            activity).apply {
+    private val layoutManager = WebtoonLayoutManager(activity).apply {
         val screenHeight = activity.resources.displayMetrics.heightPixels
         extraLayoutSpace = screenHeight / 2
         scrollDistance = screenHeight * 3 / 4
@@ -35,25 +30,11 @@ class WebtoonViewer(activity: ReaderActivity) : BaseViewer(activity) {
 
     private val frame = WebtoonFrame(activity)
 
-    private val recycler =
-            WebtoonRecyclerView(activity)
+    val recycler = WebtoonRecyclerView(activity)
 
-    val config = PagerConfig()
+    val config = WebtoonConfig()
 
     val subscriptions = CompositeSubscription()
-
-    val screenHeight by lazy {
-        val display = activity.windowManager.defaultDisplay
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
-            val metrics = DisplayMetrics()
-            display.getRealMetrics(metrics)
-            metrics.heightPixels
-        } else {
-            val field = Display::class.java.getMethod("getRawHeight")
-            field.invoke(display) as Int
-        }
-    }
 
     init {
         recycler.visibility = View.GONE // Don't let the recycler layout yet
@@ -83,7 +64,7 @@ class WebtoonViewer(activity: ReaderActivity) : BaseViewer(activity) {
             }
         })
         recycler.tapListener = { event ->
-            val positionX = event.x
+            val positionX = event.rawX
             when {
                 positionX < recycler.width * 0.33 -> moveUp()
                 positionX > recycler.width * 0.66 -> moveDown()
