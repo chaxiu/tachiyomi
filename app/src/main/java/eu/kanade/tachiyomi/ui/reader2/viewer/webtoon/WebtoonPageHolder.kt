@@ -300,10 +300,8 @@ class WebtoonPageHolder(
      */
     @SuppressLint("PrivateResource")
     private fun createProgressBar(): ReaderProgressBar {
-        progressContainer = FrameLayout(context).apply {
-            layoutParams = FrameLayout.LayoutParams(MATCH_PARENT, parentHeight)
-        }
-        frame.addView(progressContainer)
+        progressContainer = FrameLayout(context)
+        frame.addView(progressContainer, MATCH_PARENT, parentHeight)
 
         val progress = ReaderProgressBar(context).apply {
             val size = 48.dpToPx
@@ -325,7 +323,6 @@ class WebtoonPageHolder(
         val config = viewer.config
 
         subsamplingImageView = WebtoonImageView(context).apply {
-            layoutParams = FrameLayout.LayoutParams(MATCH_PARENT, MATCH_PARENT)
             setMaxTileSize(viewer.activity.maxBitmapSize)
             setPanLimit(SubsamplingScaleImageView.PAN_LIMIT_INSIDE)
             setMinimumScaleType(SubsamplingScaleImageView.SCALE_TYPE_FIT_WIDTH)
@@ -344,7 +341,7 @@ class WebtoonPageHolder(
                 }
             })
         }
-        frame.addView(subsamplingImageView)
+        frame.addView(subsamplingImageView, MATCH_PARENT, MATCH_PARENT)
         return subsamplingImageView!!
     }
 
@@ -355,10 +352,9 @@ class WebtoonPageHolder(
         if (imageView != null) return imageView!!
 
         imageView = AppCompatImageView(context).apply {
-            layoutParams = FrameLayout.LayoutParams(MATCH_PARENT, MATCH_PARENT)
             adjustViewBounds = true
         }
-        frame.addView(imageView)
+        frame.addView(imageView, MATCH_PARENT, MATCH_PARENT)
         return imageView!!
     }
 
@@ -367,10 +363,9 @@ class WebtoonPageHolder(
      */
     private fun initRetryLayout(): ViewGroup {
         if (retryContainer != null) return retryContainer!!
-        retryContainer = FrameLayout(context).apply {
-            layoutParams = FrameLayout.LayoutParams(MATCH_PARENT, parentHeight)
-        }
-        frame.addView(retryContainer)
+
+        retryContainer = FrameLayout(context)
+        frame.addView(retryContainer, MATCH_PARENT, parentHeight)
 
         AppCompatButton(context).apply {
             layoutParams = FrameLayout.LayoutParams(WRAP_CONTENT, WRAP_CONTENT).apply {

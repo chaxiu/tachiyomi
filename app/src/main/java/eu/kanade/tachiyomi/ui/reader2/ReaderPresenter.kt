@@ -7,7 +7,7 @@ import com.jakewharton.rxrelay.BehaviorRelay
 import eu.kanade.tachiyomi.R
 import eu.kanade.tachiyomi.data.cache.CoverCache
 import eu.kanade.tachiyomi.data.database.DatabaseHelper
-import eu.kanade.tachiyomi.data.database.models.Chapter
+import eu.kanade.tachiyomi.data.database.models.History
 import eu.kanade.tachiyomi.data.database.models.Manga
 import eu.kanade.tachiyomi.data.download.DownloadManager
 import eu.kanade.tachiyomi.data.preference.PreferencesHelper
@@ -31,6 +31,7 @@ import timber.log.Timber
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import java.io.File
+import java.util.Date
 import java.util.concurrent.TimeUnit
 
 class ReaderPresenter(
@@ -58,15 +59,15 @@ class ReaderPresenter(
      */
     private val chapterList by lazy {
         val manga = manga!!
-        val dbChapters = db.getChapters(manga).executeAsBlocking().map(::ReaderChapter)
+        val dbChapters = db.getChapters(manga).executeAsBlocking()
+        val selectedChapter = dbChapters.find { it.id == chapterId }
+            ?: error("Requested chapter of id $chapterId not found in chapter list")
 
-        val sortFunction: (Chapter, Chapter) -> Int = when (manga.sorting) {
-            Manga.SORTING_SOURCE -> { c1, c2 -> c2.source_order.compareTo(c1.source_order) }
-            Manga.SORTING_NUMBER -> { c1, c2 -> c1.chapter_number.compareTo(c2.chapter_number) }
-            else -> throw NotImplementedError("Unknown sorting method")
-        }
-
-        dbChapters.sortedWith(Comparator { c1, c2 -> sortFunction(c1.chapter, c2.chapter) })
+        when (manga.sorting) {
+            Manga.SORTING_SOURCE -> ChapterLoadBySource().get(dbChapters)
+            Manga.SORTING_NUMBER -> ChapterLoadByNumber().get(dbChapters, selectedChapter)
+            else -> error("Unknown sorting method")
+        }.map(::ReaderChapter)
     }
 
     override fun onCreate(savedState: Bundle?) {
@@ -157,6 +158,7 @@ class ReaderPresenter(
 
                 viewerChaptersRelay.call(newChapters)
             }
+            .onErrorResumeNext(Observable.empty())
     }
 
     private fun load(chapter: ReaderChapter) {
@@ -202,10 +204,19 @@ class ReaderPresenter(
 
     private fun onChapterChanged(fromChapter: ReaderChapter, toChapter: ReaderChapter) {
         saveChapterProgress(fromChapter)
+        saveChapterHistory(fromChapter)
     }
 
     private fun saveChapterProgress(chapter: ReaderChapter) {
         db.updateChapterProgress(chapter.chapter).asRxCompletable()
+            .onErrorComplete()
+            .subscribeOn(Schedulers.io())
+            .subscribe()
+    }
+
+    private fun saveChapterHistory(chapter: ReaderChapter) {
+        val history = History.create(chapter.chapter).apply { last_read = Date().time }
+        db.updateHistoryLastRead(history).asRxCompletable()
             .onErrorComplete()
             .subscribeOn(Schedulers.io())
             .subscribe()

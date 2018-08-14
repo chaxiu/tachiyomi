@@ -23,15 +23,12 @@ import eu.kanade.tachiyomi.ui.reader2.ReaderPresenter.SetAsCoverResult.Error
 import eu.kanade.tachiyomi.ui.reader2.ReaderPresenter.SetAsCoverResult.Success
 import eu.kanade.tachiyomi.ui.reader2.model.ReaderPage
 import eu.kanade.tachiyomi.ui.reader2.model.ViewerChapters
-import eu.kanade.tachiyomi.ui.reader2.viewer.*
+import eu.kanade.tachiyomi.ui.reader2.viewer.BaseViewer
 import eu.kanade.tachiyomi.ui.reader2.viewer.pager.L2RPagerViewer
 import eu.kanade.tachiyomi.ui.reader2.viewer.pager.R2LPagerViewer
 import eu.kanade.tachiyomi.ui.reader2.viewer.pager.VerticalPagerViewer
 import eu.kanade.tachiyomi.ui.reader2.viewer.webtoon.WebtoonViewer
-import eu.kanade.tachiyomi.util.GLUtil
-import eu.kanade.tachiyomi.util.getUriCompat
-import eu.kanade.tachiyomi.util.plusAssign
-import eu.kanade.tachiyomi.util.toast
+import eu.kanade.tachiyomi.util.*
 import eu.kanade.tachiyomi.widget.SimpleAnimationListener
 import eu.kanade.tachiyomi.widget.SimpleSeekBarListener
 import kotlinx.android.synthetic.main.reader_activity2.*
@@ -251,9 +248,13 @@ class ReaderActivity : BaseRxActivity<ReaderPresenter>() {
         toolbar.title = manga.title
 
         page_seekbar.isReversed = newViewer is R2LPagerViewer
+
+        please_wait.visible()
+        please_wait.startAnimation(AnimationUtils.loadAnimation(this, R.anim.fade_in_long))
     }
 
     fun setChapters(viewerChapters: ViewerChapters) {
+        please_wait.gone()
         viewer?.setChapters(viewerChapters)
         toolbar.subtitle = viewerChapters.currChapter.chapter.name
     }

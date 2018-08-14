@@ -24,6 +24,6 @@ class R2LPagerViewer(activity: ReaderActivity) : PagerViewer(activity) {
 
 class VerticalPagerViewer(activity: ReaderActivity) : PagerViewer(activity) {
     override fun createPager(): Pager {
-        return VerticalPager(activity)
+        return Pager(activity, isHorizontal = false)
     }
 }

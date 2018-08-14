@@ -222,7 +222,7 @@ open class WebtoonRecyclerView @JvmOverloads constructor(
             val listener = longTapListener
             if (listener != null) {
                 listener.invoke(ev)
-                performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
+                performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
             }
         }
 
