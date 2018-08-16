@@ -152,30 +152,30 @@ class WebtoonViewer(activity: ReaderActivity) : BaseViewer(activity) {
     }
 
     override fun handleKeyEvent(event: KeyEvent): Boolean {
-        fun isUp() = event.action == KeyEvent.ACTION_UP
+        val isUp = event.action == KeyEvent.ACTION_UP
 
         when (event.keyCode) {
             KeyEvent.KEYCODE_VOLUME_DOWN -> {
                 if (activity.menuVisible) {
                     return false
-                } else if (config.volumeKeysEnabled && isUp()) {
+                } else if (config.volumeKeysEnabled && isUp) {
                     if (!config.volumeKeysInverted) moveDown() else moveUp()
                 }
             }
             KeyEvent.KEYCODE_VOLUME_UP -> {
                 if (activity.menuVisible) {
                     return false
-                } else if (config.volumeKeysEnabled && isUp()) {
+                } else if (config.volumeKeysEnabled && isUp) {
                     if (!config.volumeKeysInverted) moveUp() else moveDown()
                 }
             }
-            KeyEvent.KEYCODE_DPAD_RIGHT -> if (isUp()) moveRight()
-            KeyEvent.KEYCODE_DPAD_LEFT -> if (isUp()) moveLeft()
-            KeyEvent.KEYCODE_DPAD_DOWN -> if (isUp()) moveDown()
-            KeyEvent.KEYCODE_DPAD_UP -> if (isUp()) moveUp()
-            KeyEvent.KEYCODE_PAGE_DOWN -> if (isUp()) moveDown()
-            KeyEvent.KEYCODE_PAGE_UP -> if (isUp()) moveUp()
-            KeyEvent.KEYCODE_MENU -> activity.toggleMenu()
+            KeyEvent.KEYCODE_DPAD_RIGHT -> if (isUp) moveRight()
+            KeyEvent.KEYCODE_DPAD_LEFT -> if (isUp) moveLeft()
+            KeyEvent.KEYCODE_DPAD_DOWN -> if (isUp) moveDown()
+            KeyEvent.KEYCODE_DPAD_UP -> if (isUp) moveUp()
+            KeyEvent.KEYCODE_PAGE_DOWN -> if (isUp) moveDown()
+            KeyEvent.KEYCODE_PAGE_UP -> if (isUp) moveUp()
+            KeyEvent.KEYCODE_MENU -> if (isUp) activity.toggleMenu()
             else -> return false
         }
         return true

@@ -75,7 +75,7 @@ class HttpPageLoader(
             page.setStatusSubject(statusSubject)
 
             if (page.status == Page.QUEUE) {
-                queue.offer(PriorityPage(page, 0))
+                queue.offer(PriorityPage(page, 1))
             }
 
             preloadNextPages(page, 4)
