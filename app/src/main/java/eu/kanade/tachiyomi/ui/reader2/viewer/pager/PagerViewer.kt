@@ -17,7 +17,7 @@ abstract class PagerViewer(activity: ReaderActivity) : BaseViewer(activity) {
 
     val pager = createPager()
 
-    val config = PagerConfig()
+    val config = PagerConfig(this)
 
     private val adapter = PagerViewerAdapter(this)
 
@@ -60,19 +60,16 @@ abstract class PagerViewer(activity: ReaderActivity) : BaseViewer(activity) {
         })
         pager.tapListener = { event ->
             val positionX = event.x
-
-            if (positionX < pager.width * 0.33f) {
-                if (config.tappingEnabled) moveLeft()
-            } else if (positionX > pager.width * 0.66f) {
-                if (config.tappingEnabled) moveRight()
-            } else {
-                activity.toggleMenu()
+            when {
+                positionX < pager.width * 0.33f -> if (config.tappingEnabled) moveLeft()
+                positionX > pager.width * 0.66f -> if (config.tappingEnabled) moveRight()
+                else -> activity.toggleMenu()
             }
         }
         pager.longTapListener = {
             val item = adapter.items.getOrNull(pager.currentItem)
             if (item is ReaderPage) {
-                activity.onLongTap(item)
+                activity.onPageLongTap(item)
             }
         }
 
@@ -174,22 +171,6 @@ abstract class PagerViewer(activity: ReaderActivity) : BaseViewer(activity) {
 
     override fun moveDown() {
         moveToNext()
-    }
-
-    override fun moveToNextChapter() {
-        Timber.w("moveToNextChapter")
-        val position = adapter.items.indexOfLast { it is ChapterTransition.Next }
-        if (position != -1) {
-            pager.setCurrentItem(position, true)
-        }
-    }
-
-    override fun moveToPrevChapter() {
-        Timber.w("moveToPrevChapter")
-        val position = adapter.items.indexOfFirst { it is ChapterTransition.Prev }
-        if (position != -1) {
-            pager.setCurrentItem(position, true)
-        }
     }
 
     override fun handleKeyEvent(event: KeyEvent): Boolean {

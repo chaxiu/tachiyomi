@@ -322,7 +322,7 @@ class WebtoonPageHolder(
 
         val config = viewer.config
 
-        subsamplingImageView = WebtoonImageView(context).apply {
+        subsamplingImageView = WebtoonSubsamplingImageView(context).apply {
             setMaxTileSize(viewer.activity.maxBitmapSize)
             setPanLimit(SubsamplingScaleImageView.PAN_LIMIT_INSIDE)
             setMinimumScaleType(SubsamplingScaleImageView.SCALE_TYPE_FIT_WIDTH)

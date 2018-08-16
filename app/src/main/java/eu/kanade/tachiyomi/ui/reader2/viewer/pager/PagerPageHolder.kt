@@ -27,9 +27,9 @@ import eu.kanade.tachiyomi.R
 import eu.kanade.tachiyomi.data.glide.GlideApp
 import eu.kanade.tachiyomi.data.glide.GlideInputStream
 import eu.kanade.tachiyomi.source.model.Page
-import eu.kanade.tachiyomi.ui.reader.viewer.pager.PagerReader
 import eu.kanade.tachiyomi.ui.reader2.model.ReaderPage
 import eu.kanade.tachiyomi.ui.reader2.viewer.ReaderProgressBar
+import eu.kanade.tachiyomi.ui.reader2.viewer.pager.PagerConfig.ZoomType
 import eu.kanade.tachiyomi.util.ImageUtil
 import eu.kanade.tachiyomi.util.dpToPx
 import eu.kanade.tachiyomi.util.gone
@@ -272,9 +272,9 @@ class PagerPageHolder(
             setOnImageEventListener(object : SubsamplingScaleImageView.DefaultOnImageEventListener() {
                 override fun onReady() {
                     when (config.imageZoomType) {
-                        PagerReader.ALIGN_LEFT -> setScaleAndCenter(scale, PointF(0f, 0f))
-                        PagerReader.ALIGN_RIGHT -> setScaleAndCenter(scale, PointF(sWidth.toFloat(), 0f))
-                        PagerReader.ALIGN_CENTER -> setScaleAndCenter(scale, center.apply { y = 0f })
+                        ZoomType.Left -> setScaleAndCenter(scale, PointF(0f, 0f))
+                        ZoomType.Right -> setScaleAndCenter(scale, PointF(sWidth.toFloat(), 0f))
+                        ZoomType.Center -> setScaleAndCenter(scale, center.apply { y = 0f })
                     }
                     onImageDecoded()
                 }

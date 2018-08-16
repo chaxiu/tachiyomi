@@ -24,10 +24,6 @@ abstract class BaseViewer(val activity: ReaderActivity) {
 
     abstract fun moveDown()
 
-    abstract fun moveToNextChapter()
-
-    abstract fun moveToPrevChapter()
-
     open fun handleKeyEvent(event: KeyEvent): Boolean {
         return false
     }

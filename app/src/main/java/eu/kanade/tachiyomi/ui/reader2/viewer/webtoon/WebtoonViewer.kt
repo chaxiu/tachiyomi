@@ -66,8 +66,8 @@ class WebtoonViewer(activity: ReaderActivity) : BaseViewer(activity) {
         recycler.tapListener = { event ->
             val positionX = event.rawX
             when {
-                positionX < recycler.width * 0.33 -> moveUp()
-                positionX > recycler.width * 0.66 -> moveDown()
+                positionX < recycler.width * 0.33 -> if (config.tappingEnabled) moveUp()
+                positionX > recycler.width * 0.66 -> if (config.tappingEnabled) moveDown()
                 else -> activity.toggleMenu()
             }
         }
@@ -76,7 +76,7 @@ class WebtoonViewer(activity: ReaderActivity) : BaseViewer(activity) {
             val position = recycler.getChildAdapterPosition(child)
             val item = adapter.items.getOrNull(position)
             if (item is ReaderPage) {
-                activity.onLongTap(item)
+                activity.onPageLongTap(item)
             }
         }
 
@@ -149,14 +149,6 @@ class WebtoonViewer(activity: ReaderActivity) : BaseViewer(activity) {
 
     override fun moveDown() {
         moveRight()
-    }
-
-    override fun moveToNextChapter() {
-        // TODO
-    }
-
-    override fun moveToPrevChapter() {
-        // TODO
     }
 
     override fun handleKeyEvent(event: KeyEvent): Boolean {

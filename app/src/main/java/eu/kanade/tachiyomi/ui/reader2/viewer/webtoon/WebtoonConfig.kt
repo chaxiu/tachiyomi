@@ -3,7 +3,6 @@ package eu.kanade.tachiyomi.ui.reader2.viewer.webtoon
 import com.davemorrissey.labs.subscaleview.decoder.*
 import com.f2prateek.rx.preferences.Preference
 import eu.kanade.tachiyomi.data.preference.PreferencesHelper
-import eu.kanade.tachiyomi.ui.reader.viewer.base.BaseReader
 import eu.kanade.tachiyomi.util.addTo
 import rx.subscriptions.CompositeSubscription
 import uy.kohesive.injekt.Injekt
@@ -75,11 +74,13 @@ class WebtoonConfig(preferences: PreferencesHelper = Injekt.get()) {
 
     private fun decoderFromPreference(value: Int) {
         when (value) {
-            BaseReader.IMAGE_DECODER -> {
+            // Image decoder
+            0 -> {
                 bitmapDecoder = IImageDecoder::class.java
                 regionDecoder = IImageRegionDecoder::class.java
             }
-            BaseReader.SKIA_DECODER -> {
+            // Skia decoder
+            2 -> {
                 bitmapDecoder = SkiaImageDecoder::class.java
                 regionDecoder = SkiaImageRegionDecoder::class.java
             }

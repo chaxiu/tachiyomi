@@ -1,6 +1,7 @@
 package eu.kanade.tachiyomi.ui.reader2
 
 import android.annotation.SuppressLint
+import android.app.ProgressDialog
 import android.content.Context
 import android.content.Intent
 import android.content.pm.ActivityInfo
@@ -58,7 +59,10 @@ class ReaderActivity : BaseRxActivity<ReaderPresenter>() {
 
     private var systemUi: SystemUiHelper? = null
 
-    private var settings: ReaderSettings? = null
+    private var config: ReaderConfig? = null
+
+    @Suppress("DEPRECATION")
+    private var progressDialog: ProgressDialog? = null
 
     companion object {
         @Suppress("unused")
@@ -103,14 +107,16 @@ class ReaderActivity : BaseRxActivity<ReaderPresenter>() {
             menuVisible = savedState.getBoolean(::menuVisible.name)
         }
 
-        settings = ReaderSettings()
+        config = ReaderConfig()
         initializeMenu()
     }
 
     override fun onDestroy() {
         super.onDestroy()
         viewer?.destroy()
-        settings?.destroy()
+        config?.destroy()
+        progressDialog?.dismiss()
+        progressDialog = null
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
@@ -158,7 +164,6 @@ class ReaderActivity : BaseRxActivity<ReaderPresenter>() {
         // Init listeners on bottom menu
         page_seekbar.setOnSeekBarChangeListener(object : SimpleSeekBarListener() {
             override fun onProgressChanged(seekBar: SeekBar, value: Int, fromUser: Boolean) {
-                val viewer = viewer
                 if (viewer != null && fromUser) {
                     moveToPageIndex(value)
                 }
@@ -259,6 +264,22 @@ class ReaderActivity : BaseRxActivity<ReaderPresenter>() {
         toolbar.subtitle = viewerChapters.currChapter.chapter.name
     }
 
+    fun setInitialChapterError(error: Throwable) {
+        Timber.e(error)
+        finish()
+        toast(error.message)
+    }
+
+    @Suppress("DEPRECATION")
+    fun setProgressBar(show: Boolean) {
+        progressDialog?.dismiss()
+        progressDialog = if (show) {
+            ProgressDialog.show(this, null, getString(R.string.loading), true)
+        } else {
+            null
+        }
+    }
+
     fun moveToPageIndex(index: Int) {
         val currentChapter = presenter.getCurrentChapter() ?: return
         val page = currentChapter.pages?.getOrNull(index) ?: return
@@ -270,11 +291,11 @@ class ReaderActivity : BaseRxActivity<ReaderPresenter>() {
     }
 
     private fun moveToNextChapter() {
-        viewer?.moveToNextChapter()
+        presenter.loadNextChapter()
     }
 
     private fun moveToPrevChapter() {
-        viewer?.moveToPrevChapter()
+        presenter.loadPreviousChapter()
     }
 
     /**
@@ -303,7 +324,7 @@ class ReaderActivity : BaseRxActivity<ReaderPresenter>() {
         page_seekbar.progress = page.index
     }
 
-    fun onLongTap(page: ReaderPage) {
+    fun onPageLongTap(page: ReaderPage) {
         ReaderPageSheet(this, page).show()
     }
 
@@ -365,10 +386,10 @@ class ReaderActivity : BaseRxActivity<ReaderPresenter>() {
     }
 
     /**
-     * Reader settings
+     * Reader config
      */
 
-    private inner class ReaderSettings {
+    private inner class ReaderConfig {
 
         private val subscriptions = CompositeSubscription()
 

@@ -127,6 +127,4 @@ class WebtoonAdapter(val viewer: WebtoonViewer) : RecyclerView.Adapter<RecyclerV
         const val TRANSITION_VIEW = 1
     }
 
-
-
 }

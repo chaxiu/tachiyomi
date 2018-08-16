@@ -53,6 +53,8 @@ class ReaderPresenter(
 
     private val viewerChaptersRelay = BehaviorRelay.create<ViewerChapters>()
 
+    private val isLoadingAdjacentChapterRelay = BehaviorRelay.create<Boolean>()
+
     /**
      * Chapter list for the active manga. It's retrieved lazily and should be accessed for the first
      * time in a background thread to avoid blocking the UI.
@@ -110,12 +112,73 @@ class ReaderPresenter(
 
         Observable.just(manga).subscribeLatestCache(ReaderActivity::setManga)
         viewerChaptersRelay.subscribeLatestCache(ReaderActivity::setChapters)
+        isLoadingAdjacentChapterRelay.subscribeLatestCache(ReaderActivity::setProgressBar)
 
-        Completable.fromCallable { load(chapterList.first { chapterId == it.chapter.id }) }
+        Completable.fromCallable { load(chapterList.first { chapterId == it.chapter.id }, true) }
             .onErrorComplete()
             .subscribeOn(Schedulers.io())
             .subscribe()
             .also(::add)
+    }
+
+    private fun getLoadObservable(
+            loader: ChapterLoader,
+            chapter: ReaderChapter
+    ): Observable<ViewerChapters> {
+        return loader.loadChapter(chapter)
+            .andThen(Observable.fromCallable {
+                val chapterPos = chapterList.indexOf(chapter)
+
+                ViewerChapters(chapter,
+                        chapterList.getOrNull(chapterPos - 1),
+                        chapterList.getOrNull(chapterPos + 1))
+            })
+            .observeOn(AndroidSchedulers.mainThread())
+            .doOnNext { newChapters ->
+                val oldChapters = viewerChaptersRelay.value
+
+                // Add new references first to avoid unnecessary recycling
+                newChapters.ref()
+                oldChapters?.unref()
+
+                viewerChaptersRelay.call(newChapters)
+            }
+    }
+
+    private fun load(chapter: ReaderChapter, firstLoad: Boolean = false) {
+        Timber.w("Loading ${chapter.chapter.url}")
+
+        val loader = loader ?: return
+
+        activeChapterSubscription?.unsubscribe()
+        activeChapterSubscription = if (firstLoad) {
+            getLoadObservable(loader, chapter)
+                .subscribeFirst({ _, _ ->
+                    // Ignore onNext event
+                }, ReaderActivity::setInitialChapterError)
+        } else {
+            getLoadObservable(loader, chapter)
+                .toCompletable()
+                .onErrorComplete()
+                .subscribe()
+                .also(::add)
+        }
+    }
+
+    private fun loadAdjacent(chapter: ReaderChapter) {
+        Timber.w("Loading adjacent ${chapter.chapter.url}")
+
+        val loader = loader ?: return
+
+        activeChapterSubscription?.unsubscribe()
+        activeChapterSubscription = getLoadObservable(loader, chapter)
+            .doOnSubscribe { isLoadingAdjacentChapterRelay.call(true) }
+            .doOnUnsubscribe { isLoadingAdjacentChapterRelay.call(false) }
+            .subscribeFirst({ view, _ ->
+                view.moveToPageIndex(0)
+            }, { _, _ ->
+                // Ignore onError event, viewers handle that state
+            })
     }
 
     private fun preload(chapter: ReaderChapter) {
@@ -131,57 +194,9 @@ class ReaderPresenter(
             .observeOn(AndroidSchedulers.mainThread())
             // Update current chapters whenever a chapter is preloaded
             .doOnCompleted { viewerChaptersRelay.value?.let(viewerChaptersRelay::call) }
+            .onErrorComplete()
             .subscribe()
             .also(::add)
-    }
-
-    private fun getLoadObservable(
-            loader: ChapterLoader,
-            chapter: ReaderChapter
-    ): Observable<ViewerChapters> {
-        return loader.loadChapter(chapter)
-            .andThen(Observable.just(chapter))
-            .map {
-                val chapterPos = chapterList.indexOf(chapter)
-
-                ViewerChapters(chapter,
-                        chapterList.getOrNull(chapterPos - 1),
-                        chapterList.getOrNull(chapterPos + 1))
-            }
-            .observeOn(AndroidSchedulers.mainThread())
-            .doOnNext { newChapters ->
-                val oldChapters = viewerChaptersRelay.value
-
-                // Add new references first to avoid unnecessary recycling
-                newChapters.ref()
-                oldChapters?.unref()
-
-                viewerChaptersRelay.call(newChapters)
-            }
-            .onErrorResumeNext(Observable.empty())
-    }
-
-    private fun load(chapter: ReaderChapter) {
-        Timber.w("Loading ${chapter.chapter.url}")
-
-        val loader = loader ?: return
-
-        activeChapterSubscription?.unsubscribe()
-        activeChapterSubscription = getLoadObservable(loader, chapter)
-            .subscribe()
-            .also(::add)
-    }
-
-    private fun loadAdjacent(chapter: ReaderChapter) {
-        Timber.w("Loading adjacent ${chapter.chapter.url}")
-
-        val loader = loader ?: return
-
-        activeChapterSubscription?.unsubscribe()
-        activeChapterSubscription = getLoadObservable(loader, chapter)
-            .subscribeFirst({ view, _ ->
-                view.moveToPageIndex(0)
-            })
     }
 
     fun onPageSelected(page: ReaderPage) {
@@ -264,6 +279,7 @@ class ReaderPresenter(
     fun setMangaViewer(viewer: Int) {
         val manga = manga ?: return
         manga.viewer = viewer
+        // TODO custom put operation
         db.insertManga(manga).executeAsBlocking()
 
         Observable.timer(250, TimeUnit.MILLISECONDS, AndroidSchedulers.mainThread())

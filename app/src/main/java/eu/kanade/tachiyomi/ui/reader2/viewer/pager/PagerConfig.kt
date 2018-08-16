@@ -3,13 +3,12 @@ package eu.kanade.tachiyomi.ui.reader2.viewer.pager
 import com.davemorrissey.labs.subscaleview.decoder.*
 import com.f2prateek.rx.preferences.Preference
 import eu.kanade.tachiyomi.data.preference.PreferencesHelper
-import eu.kanade.tachiyomi.ui.reader.viewer.base.BaseReader
 import eu.kanade.tachiyomi.util.addTo
 import rx.subscriptions.CompositeSubscription
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 
-class PagerConfig(preferences: PreferencesHelper = Injekt.get()) {
+class PagerConfig(private val viewer: PagerViewer, preferences: PreferencesHelper = Injekt.get()) {
 
     private val subscriptions = CompositeSubscription()
 
@@ -30,7 +29,7 @@ class PagerConfig(preferences: PreferencesHelper = Injekt.get()) {
     var imageScaleType = 1
         private set
 
-    var imageZoomType = 1
+    var imageZoomType = ZoomType.Left
         private set
 
     var imageCropBorders = false
@@ -56,7 +55,7 @@ class PagerConfig(preferences: PreferencesHelper = Injekt.get()) {
             .register({ imageScaleType = it }, { imagePropertyChangedListener?.invoke() })
 
         preferences.zoomStart()
-            .register({ imageZoomType = it }, { imagePropertyChangedListener?.invoke() })
+            .register({ zoomTypeFromPreference(it) }, { imagePropertyChangedListener?.invoke() })
 
         preferences.cropBorders()
             .register({ imageCropBorders = it }, { imagePropertyChangedListener?.invoke() })
@@ -93,15 +92,38 @@ class PagerConfig(preferences: PreferencesHelper = Injekt.get()) {
 
     private fun decoderFromPreference(value: Int) {
         when (value) {
-            BaseReader.IMAGE_DECODER -> {
+            // Image decoder
+            0 -> {
                 bitmapDecoder = IImageDecoder::class.java
                 regionDecoder = IImageRegionDecoder::class.java
             }
-            BaseReader.SKIA_DECODER -> {
+            // Skia decoder
+            2 -> {
                 bitmapDecoder = SkiaImageDecoder::class.java
                 regionDecoder = SkiaImageRegionDecoder::class.java
             }
         }
+    }
+
+    private fun zoomTypeFromPreference(value: Int) {
+        imageZoomType = when (value) {
+            // Auto
+            1 -> when (viewer) {
+                is L2RPagerViewer -> ZoomType.Left
+                is R2LPagerViewer -> ZoomType.Right
+                else -> ZoomType.Center
+            }
+            // Left
+            2 -> ZoomType.Left
+            // Right
+            3 -> ZoomType.Right
+            // Center
+            else -> ZoomType.Center
+        }
+    }
+
+    enum class ZoomType {
+        Left, Center, Right
     }
 
 }

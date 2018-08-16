@@ -24,9 +24,11 @@ class ChapterLoader(
         }
 
         return Observable.just(chapter)
+            .doOnNext { chapter.state = ReaderChapter.State.Loading }
             .observeOn(Schedulers.io())
             .flatMap {
                 Timber.w("Loading pages for ${chapter.chapter.name}")
+
                 val loader = getPageLoader(it)
                 chapter.pageLoader = loader
 
@@ -47,13 +49,6 @@ class ChapterLoader(
                 if (!chapter.chapter.read) {
                     chapter.requestedPage = chapter.chapter.last_page_read
                 }
-
-                // Now that the number of pages is known, fix the requested page if the last one
-                // was requested.
-                // TODO probably not needed anymore
-//                if (chapter.requestedPage == -1) {
-//                    chapter.requestedPage = pages.lastIndex
-//                }
             }
             .toCompletable()
             .doOnError { chapter.state = ReaderChapter.State.Error(it) }
